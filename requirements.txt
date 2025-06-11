@@ -1,0 +1,23 @@
+# CogniQuantum V2 Dependencies
+
+# Core Dependencies
+aiohttp>=3.8.0
+python-dotenv>=1.0.0
+numpy>=1.21.0,<2.0
+httpx>=0.24.0
+
+# Audio Processing (Optional)
+openai-whisper>=20231117
+
+# Development Dependencies (Optional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+mypy>=1.0.0
+
+# Documentation Dependencies (Optional)
+mkdocs>=1.4.0
+mkdocs-material>=8.0.0
+
+# For advanced NLP-based complexity analysis (optional)
+spacy>=3.0.0,<4.0.0
