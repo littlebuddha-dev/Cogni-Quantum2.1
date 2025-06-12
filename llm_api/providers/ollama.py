@@ -17,7 +17,7 @@ class OllamaProvider(LLMProvider):
     """
     def __init__(self):
         self.api_base_url = settings.OLLAMA_API_BASE_URL
-        self.default_model = settings.OLLAMA_DEFAULT_MODEL # ★★★ 修正箇所 ★★★
+        self.default_model = settings.OLLAMA_DEFAULT_MODEL
         self.timeout = settings.OLLAMA_TIMEOUT
         super().__init__()
         logger.info(f"Ollama provider initialized with API URL: {self.api_base_url} and default model: {self.default_model}")
@@ -38,7 +38,6 @@ class OllamaProvider(LLMProvider):
         Ollama APIを呼び出し、標準化された辞書形式で結果を返す。
         """
         api_url = f"{self.api_base_url}/api/chat"
-        # ★★★ 修正箇所 ★★★
         model = kwargs.get("model", self.default_model)
         
         messages = []

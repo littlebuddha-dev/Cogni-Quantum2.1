@@ -1,6 +1,6 @@
 # /llm_api/cogniquantum/engine.py
-# タイトル: Enhanced Reasoning Engine with Configurable Concurrency
-# 役割: 高複雑性モードでサブ問題を解決する際の同時実行数を、configファイルから読み込むように修正。
+# タイトル: Enhanced Reasoning Engine with Incremental Integration
+# 役割: 統合ステップを一度にすべて行うのではなく、1つずつ統合する「逐次統合」方式に変更し、長大なプロンプトによるモデルのエラーを回避する。
 
 import logging
 import json
@@ -11,12 +11,12 @@ from typing import Any, Dict, List, Optional
 from .analyzer import AdaptiveComplexityAnalyzer
 from .enums import ComplexityRegime
 from ..providers.base import LLMProvider
-from ..config import settings # ★★★ 追加箇所 ★★★
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
 class EnhancedReasoningEngine:
-    # ... (init, execute_reasoning, low/medium complexity methodsは変更なし) ...
+    # ... (init, execute_reasoning, low/medium/high, decompose, solve_decomposed は変更なし) ...
     def __init__(self, provider: LLMProvider, base_model_kwargs: Dict[str, Any], complexity_analyzer: Optional[AdaptiveComplexityAnalyzer] = None):
         self.provider = provider
         self.base_model_kwargs = base_model_kwargs
@@ -175,7 +175,7 @@ class EnhancedReasoningEngine:
         except (json.JSONDecodeError, Exception) as e:
             logger.error(f"問題の分解結果の解析中にエラー: {e}")
             return []
-
+    
     async def _solve_decomposed_problems(
         self, 
         sub_problems: List[str], 
@@ -185,8 +185,6 @@ class EnhancedReasoningEngine:
         """分解されたサブ問題を並列で解決する（同時実行数制限付き）"""
         logger.info(f"{len(sub_problems)}個のサブ問題を並列解決します。")
         
-        # ★★★ 変更箇所 ★★★
-        # configから同時実行数を読み込む（安全のためデフォルトは2に設定）
         concurrency_limit = settings.OLLAMA_CONCURRENCY_LIMIT
         semaphore = asyncio.Semaphore(concurrency_limit)
         logger.info(f"同時リクエスト数を{concurrency_limit}に制限します。")
@@ -217,33 +215,57 @@ class EnhancedReasoningEngine:
         original_prompt: str, 
         system_prompt: str
     ) -> str | Dict:
-        """段階的解決策を統合し、一貫性のある最終解を生成する"""
-        if not staged_solutions: return ""
-
-        # タイムアウト等で失敗したサブ問題を除外して統合
-        valid_solutions = [s for s in staged_solutions if not s.get('error') and s.get('solution')]
+        """段階的解決策を「逐次統合」し、一貫性のある最終解を生成する"""
+        valid_solutions = [s['solution'] for s in staged_solutions if s.get('solution') and not s.get('error')]
         if not valid_solutions:
-             logger.error("全てのサブ問題の解決に失敗したため、統合できません。")
-             return {"error": "All sub-problems failed to be solved."}
+            logger.error("有効なサブ問題の解決策がないため、統合できません。")
+            return {"error": "No valid sub-solutions to integrate."}
 
-        context = "\n\n".join(
-            f"### サブ問題: {s['sub_problem']}\n解決策: {s['solution']}"
-            for s in valid_solutions
-        )
-        integration_prompt = f"""以下の「元の問題」と、それに関連する複数の「サブ問題の解決策」を統合し、一貫性のある包括的な最終解答を作成してください。
+        logger.info(f"{len(valid_solutions)}個の有効な解決策を逐次統合します。")
+        
+        # 最初の統合
+        integrated_solution = valid_solutions[0]
+        if len(valid_solutions) > 1:
+            # 2番目以降の解を順番に統合していく
+            for i, next_solution in enumerate(valid_solutions[1:]):
+                logger.info(f"統合ステップ {i+1}/{len(valid_solutions)-1} を実行中...")
+                integration_prompt = f"""以下の「これまでの統合結果」と「新しい情報」を論理的に結合し、より包括的で一貫性のある一つの文章にまとめてください。
 
-# 元の問題
+# これまでの統合結果
+---
+{integrated_solution}
+---
+
+# 新しい情報
+---
+{next_solution}
+---
+
+# 統合された新しい結果
+（ここまでの内容を自然に統合した、より完全な文章を生成してください）
+"""
+                response = await self.provider.call(integration_prompt, system_prompt, **self.base_model_kwargs)
+                if response.get('error'):
+                    logger.error(f"統合ステップ {i+1} でエラーが発生しました: {response['error']}")
+                    # エラーが発生した場合は、その時点での統合結果を返す
+                    return integrated_solution
+                
+                integrated_solution = response.get('text', integrated_solution)
+
+        # 最終的な仕上げ
+        final_polish_prompt = f"""以下の文章は、複数の部分的な解答を統合して作成されました。
+全体の構成を整え、冗長な部分を削除し、一貫性のある流れるような最終レポートとして完成させてください。元の質問に明確に答える形で締めくくってください。
+
+# 元の質問
 {original_prompt}
 
-# サブ問題の解決策
----
-{context}
----
+# 統合された文章
+{integrated_solution}
 
-# 最終解答
-上記の情報を synthesis (統合・総合) し、論理的な流れを持つ、最終的な答えを生成してください。
+# 完成された最終レポート
 """
-        response = await self.provider.call(integration_prompt, system_prompt, **self.base_model_kwargs)
-        if response.get('error'):
-            return {'error': response['error']}
-        return response.get('text', '')
+        final_response = await self.provider.call(final_polish_prompt, system_prompt, **self.base_model_kwargs)
+        if final_response.get('error'):
+            return integrated_solution # 仕上げに失敗しても、それまでの結果を返す
+            
+        return final_response.get('text', integrated_solution)
