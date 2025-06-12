@@ -1,6 +1,6 @@
 # /llm_api/providers/enhanced_claude_v2.py
-# タイトル: EnhancedClaudeProviderV2 with Real-time Adjustment
-# 役割: リアルタイム複雑性調整の指示をCogniQuantumシステムへ中継する。
+# タイトル: EnhancedClaudeProviderV2 with Quantum-Inspired Mode Support
+# 役割: 'quantum_inspired'モードの指示をCogniQuantumシステムへ中継する。
 
 import logging
 from typing import Any, Dict
@@ -16,7 +16,8 @@ class EnhancedClaudeProviderV2(EnhancedLLMProvider):
 
     def should_use_enhancement(self, prompt: str, **kwargs) -> bool:
         return kwargs.get('force_v2', False) or kwargs.get('mode', 'simple') in [
-            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized'
+            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel',
+            'quantum_inspired'
         ]
     
     async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
@@ -41,7 +42,8 @@ class EnhancedClaudeProviderV2(EnhancedLLMProvider):
                 use_rag=use_rag,
                 knowledge_base_path=knowledge_base_path,
                 use_wikipedia=use_wikipedia,
-                real_time_adjustment=real_time_adjustment
+                real_time_adjustment=real_time_adjustment,
+                mode=mode
             )
 
             if not result.get('success'):

@@ -47,10 +47,10 @@ python fetch_llm_v2.py claude "simple question" --mode efficient
 python fetch_llm_v2.py openai "extremely complex system design" --mode decomposed
 ```
 
-#### **4. Paper-Optimized Mode (All Insights Applied)**
+#### **4. Quantum-Inspired Synthesis**
 ```bash
-# Complete integration of all research findings
-python fetch_llm_v2.py claude "comprehensive analysis request" --mode paper_optimized
+# Holistic synthesis from diverse viewpoints
+python fetch_llm_v2.py openai "Analyze the future of AI in society" --mode quantum_inspired
 ```
 
 ---
@@ -76,12 +76,23 @@ python fetch_llm_v2.py claude "comprehensive analysis request" --mode paper_opti
 
 ---
 
-## 🛠 **Installation & Quick Start**
+---
+## 🛠️ Installation & Quick Start
 
 ### **Requirements**
 - Python 3.10+
-- At least one LLM provider API key (OpenAI, Claude, Gemini) or local Ollama setup
+- `pip install -r requirements.txt` (Installs all dependencies including `langdetect`)
+- At least one LLM provider API key or local Ollama setup
 
+
+### **Enabling Advanced Multi-Language Analysis (Optional)**
+
+To enable the most accurate complexity analysis for languages other than English, you need to download the corresponding `spaCy` models. The system will attempt to do this automatically, but you can also do it manually.
+
+**For Japanese:**
+```bash
+python -m spacy download ja_core_news_sm
+```
 ### **Setup**
 ```bash
 # Clone the repository
@@ -102,7 +113,7 @@ python quick_test_v2.py
 ### **Immediate Usage**
 ```bash
 # Basic efficiency test
-python fetch_llm_v2.py openai "What is 2+2?" --mode efficient
+python fetch_llm_v2.py ollama "What is 2+2?" --mode efficient
 
 # Complex reasoning test  
 python fetch_llm_v2.py claude "Design a sustainable urban transportation system" --mode decomposed
@@ -499,18 +510,20 @@ This is an independent research implementation based on the publicly available A
 
 ## 🚀 **Future Roadmap**
 
-### **V2.1 (Implemented)**
-- [x] **Real-time complexity adjustment**: The system now re-evaluates the solution and can escalate the complexity regime for a more detailed answer if the initial one is insufficient.
-
-### **V2.2 (Implemented)**
-- [x] **Parallel reasoning pipelines**: A new `parallel` mode runs multiple strategies concurrently and selects the best outcome, maximizing quality.
-- [x] **Real-time complexity adjustment**: The system now re-evaluates the solution and can escalate the complexity regime for a more detailed answer if the initial one is insufficient.
-
-### **V3.0 (Future Vision)**
-- [ ] Quantum-inspired reasoning implementation
-- [ ] Self-improving complexity analysis
-- [ ] Multi-language complexity detection
-- [ ] Edge device optimization
+# (抜粋)
+...
+### **V3.0 (Implemented)**
+- [x] **Quantum-inspired reasoning implementation**: A new `quantum_inspired` mode uses superposition and collapse principles to synthesize novel insights.
+- [x] **Self-improving complexity analysis**: The system now learns from its past performance to refine future complexity assessments, saving results to `complexity_learnings.json`.
+- [x] **Multi-language complexity detection**: Automatically detects prompt language (e.g., English, Japanese) and uses the appropriate analysis models and keywords.
+- [x] **Edge device optimization**: A new `--mode edge` provides a lightweight, low-resource configuration that disables heavy processing for speed and efficiency.
+...
+### **Mode Quick Reference**
+- ...
+- `quantum_inspired` → Holistic, synthesized insight
+- `edge` → Lightweight, for low-resource devices
+- `paper_optimized` → Maximum research benefit
+...
 
 ### **Research Extensions**
 - [ ] Integration with cognitive architectures

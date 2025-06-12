@@ -1,12 +1,12 @@
 # /llm_api/cogniquantum/engine.py
-# タイトル: Enhanced Reasoning Engine with Parallel Sub-problem Solving
-# 役割: 論文の発見に基づく改良推論エンジン。高複雑性モードにおいて、サブ問題を並列解決する機能を追加して高速化する。
+# タイトル: Enhanced Reasoning Engine
+# 役割: 論文の発見に基づく改良推論エンジン。外部からアナライザーを受け取れるように修正。
 
 import logging
 import json
 import re
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from .analyzer import AdaptiveComplexityAnalyzer
 from .enums import ComplexityRegime
@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 class EnhancedReasoningEngine:
     """論文の発見に基づく改良推論エンジン"""
     
-    def __init__(self, provider: LLMProvider, base_model_kwargs: Dict[str, Any]):
+    def __init__(self, provider: LLMProvider, base_model_kwargs: Dict[str, Any], complexity_analyzer: Optional[AdaptiveComplexityAnalyzer] = None):
         self.provider = provider
         self.base_model_kwargs = base_model_kwargs
-        self.complexity_analyzer = AdaptiveComplexityAnalyzer()
+        # 外部からアナライザーが渡されなければ、自身で作成する
+        self.complexity_analyzer = complexity_analyzer or AdaptiveComplexityAnalyzer()
         
     async def execute_reasoning(
         self,
@@ -32,8 +33,8 @@ class EnhancedReasoningEngine:
         """複雑性体制に応じた適応的推論の実行"""
         
         if complexity_score is None or regime is None:
-            # force_regimeが渡された場合でも、regimeがNoneなら分析を行う
             if regime is None:
+                # 自身が持つアナライザーを使用
                 complexity_score, regime = self.complexity_analyzer.analyze_complexity(prompt)
         
         logger.info(f"推論実行開始: 体制={regime.value}, 複雑性={complexity_score or 'N/A'}")
@@ -44,7 +45,8 @@ class EnhancedReasoningEngine:
             return await self._execute_medium_complexity_reasoning(prompt, system_prompt)
         else:  # HIGH
             return await self._execute_high_complexity_reasoning(prompt, system_prompt)
-    
+
+    # ... その他のメソッドは変更なし ...
     async def _execute_low_complexity_reasoning(
         self, 
         prompt: str, 

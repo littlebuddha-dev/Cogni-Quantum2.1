@@ -1,6 +1,6 @@
 # /llm_api/providers/enhanced_ollama_v2.py
-# タイトル: EnhancedOllamaProviderV2 with Real-time Adjustment
-# 役割: リアルタイム複雑性調整の指示をCogniQuantumシステムへ中継する。
+# タイトル: EnhancedOllamaProviderV2 with Edge Mode Optimization
+# 役割: 'edge'モード時に軽量モデルを自動選択するなど、エッジデバイス向け最適化を行う。
 
 import logging
 from typing import Any, Dict
@@ -20,7 +20,8 @@ class EnhancedOllamaProviderV2(EnhancedLLMProvider):
 
     def should_use_enhancement(self, prompt: str, **kwargs) -> bool:
         return kwargs.get('force_v2', False) or kwargs.get('mode', 'simple') in [
-            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized'
+            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel',
+            'quantum_inspired', 'edge'
         ]
 
     async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
@@ -45,7 +46,8 @@ class EnhancedOllamaProviderV2(EnhancedLLMProvider):
                 use_rag=use_rag,
                 knowledge_base_path=knowledge_base_path,
                 use_wikipedia=use_wikipedia,
-                real_time_adjustment=real_time_adjustment
+                real_time_adjustment=real_time_adjustment,
+                mode=mode
             )
 
             if not result.get('success'):
@@ -71,20 +73,27 @@ class EnhancedOllamaProviderV2(EnhancedLLMProvider):
             return {"text": "", "error": str(e)}
 
     def _determine_force_regime(self, mode: str) -> ComplexityRegime | None:
-        if mode == 'efficient': return ComplexityRegime.LOW
+        if mode in ['efficient', 'edge']: return ComplexityRegime.LOW
         if mode == 'balanced': return ComplexityRegime.MEDIUM
         if mode == 'decomposed': return ComplexityRegime.HIGH
         return None
 
     def _get_optimized_params(self, model_name: str, mode: str, kwargs: Dict) -> Dict:
         params = kwargs.copy()
-        effective_model_name = model_name or 'gemma3:latest'
+        
+        if mode == 'edge' and not model_name:
+            # Edgeモードでモデル指定がない場合、軽量なgemma:2bをデフォルトにする
+            effective_model_name = 'gemma:2b'
+            logger.info(f"エッジモードのため、デフォルトの軽量モデル '{effective_model_name}' を選択しました。")
+        else:
+            effective_model_name = model_name or 'gemma:latest'
+
         family = get_model_family(effective_model_name)
-        logger.info(f"モデル '{effective_model_name}' (ファミリー: {family}) のパラメータを最適化")
+        logger.info(f"モデル '{effective_model_name}' (ファミリー: {family}) のパラメータを最適化中")
 
         if not params.get('model'): params['model'] = effective_model_name
         
-        temp_map = {'efficient': 0.2, 'balanced': 0.5, 'decomposed': 0.4}
+        temp_map = {'efficient': 0.2, 'balanced': 0.5, 'decomposed': 0.4, 'edge': 0.3}
         if mode in temp_map and 'temperature' not in params: params['temperature'] = temp_map[mode]
 
         if family == 'llama' and 'top_p' not in params: params['top_p'] = 0.9

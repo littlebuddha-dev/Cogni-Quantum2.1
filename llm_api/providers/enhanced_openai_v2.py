@@ -1,6 +1,6 @@
 # /llm_api/providers/enhanced_openai_v2.py
-# タイトル: EnhancedOpenAIProviderV2 supporting Parallel Mode
-# 役割: 'parallel'モードの指示をCogniQuantumシステムへ中継する。
+# タイトル: EnhancedOpenAIProviderV2 with Quantum-Inspired Mode Support
+# 役割: 'quantum_inspired'と'parallel'モードの指示をCogniQuantumシステムへ中継する。
 
 import logging
 from typing import Any, Dict
@@ -16,7 +16,8 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
 
     def should_use_enhancement(self, prompt: str, **kwargs) -> bool:
         return kwargs.get('force_v2', False) or kwargs.get('mode', 'simple') in [
-            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel'
+            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel',
+            'quantum_inspired'
         ]
     
     async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:

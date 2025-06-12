@@ -1,6 +1,6 @@
 # /cli/main.py
-# タイトル: CLI main entrypoint with Parallel Mode
-# 役割: CLIのエントリーポイントと引数解析。新しい'parallel'モードを追加する。
+# タイトル: CLI main entrypoint with Edge Mode
+# 役割: CLIのエントリーポイントと引数解析。'edge'モードを追加。
 
 import argparse
 import asyncio
@@ -35,10 +35,13 @@ async def main():
     # V2専用モードを含む選択肢
     mode_choices = [
         'simple', 'chat', 'reasoning', 'creative-fusion', 'self-correct',
-        'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel'
+        'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel',
+        'quantum_inspired', 'edge'
     ]
     parser.add_argument("--mode", default="simple", choices=mode_choices, help="実行モード")
     
+    # (以降のコードは変更なし)
+    # ...
     # 基本オプション
     parser.add_argument("--model", help="使用するモデル名")
     parser.add_argument("-f", "--file", help="ファイルからプロンプトを読み込み")

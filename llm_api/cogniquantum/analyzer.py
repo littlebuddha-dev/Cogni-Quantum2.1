@@ -1,77 +1,160 @@
 # /llm_api/cogniquantum/analyzer.py
-"""
-プロンプトの複雑性分析モジュール
-"""
+# タイトル: Multi-Language and Edge-Aware Complexity Analyzer
+# 役割: Edgeモードを検知し、NLP分析をバイパスしてリソースを節約する。
+
 import logging
 import spacy
-from typing import Tuple
+from typing import Tuple, Optional, Dict, Any
+
+from langdetect import detect, LangDetectException
 
 from .enums import ComplexityRegime
+from .learner import ComplexityLearner
 
 logger = logging.getLogger(__name__)
 
 class AdaptiveComplexityAnalyzer:
     """
-    Analyzes the complexity of a prompt to determine the optimal reasoning strategy.
-    Enhanced with NLP capabilities if spaCy is available.
+    プロンプトの言語を自動検出し、その言語に最適化された複雑性分析を行う。
+    Edgeモードに対応し、リソース消費を抑制する。
     """
-    def __init__(self, spacy_model_name="en_core_web_sm"):
+    def __init__(self, learner: Optional[ComplexityLearner] = None):
+        # ... (変更なし)
+        self.learner = learner
+        self.nlp_models: Dict[str, Any] = {}
+        self.keyword_sets = {
+            'en': {
+                'conditional': ['if', 'when', 'unless', 'provided', 'given'],
+                'hierarchy': ['first', 'second', 'then', 'next', 'finally', 'step'],
+                'constraint': ['must', 'cannot', 'should not', 'requires', 'constraint'],
+                'math': ['calculate', 'solve', 'equation', 'algorithm', 'optimization'],
+                'planning': ['plan', 'strategy', 'design', 'organize', 'coordinate'],
+                'analysis': ['analyze', 'compare', 'evaluate', 'assess', 'consider'],
+            },
+            'ja': {
+                'conditional': ['場合', 'とき', 'たら', 'れば', 'なら', 'もし'],
+                'hierarchy': ['まず', '次に', 'そして', '最後に', '第一に', '第二に', 'ステップ'],
+                'constraint': ['必要', '必須', 'ならない', 'べき', '制約', '条件'],
+                'math': ['計算', '解く', '方程式', 'アルゴリズム', '最適化'],
+                'planning': ['計画', '戦略', '設計', '整理', '調整'],
+                'analysis': ['分析', '比較', '評価', '検討', '考察'],
+            }
+        }
+        self.spacy_model_map = {
+            'en': 'en_core_web_sm',
+            'ja': 'ja_core_news_sm',
+            'de': 'de_core_news_sm',
+            'es': 'es_core_news_sm',
+            'fr': 'fr_core_news_sm',
+        }
+    
+    def analyze_complexity(self, prompt: str, mode: str = 'adaptive') -> Tuple[float, ComplexityRegime]:
         """
-        Initializes the analyzer. Tries to load a spaCy model for advanced NLP analysis.
-        If spaCy is not installed or the model can't be loaded, it gracefully falls back
-        to a keyword-based analysis.
+        多言語とEdgeモードに対応した複雑性分析。
         """
-        self.nlp = None
-        if spacy:
-            try:
-                # モデルがシステムに存在するかチェック
-                if not spacy.util.is_package(spacy_model_name):
-                    logger.info(f"spaCy model '{spacy_model_name}' not found. Attempting to download...")
-                    spacy.cli.download(spacy_model_name)
-                    logger.info(f"Model '{spacy_model_name}' downloaded successfully.")
+        # --- Edgeモード特別処理 ---
+        if mode == 'edge':
+            logger.info("エッジモードのため、軽量なキーワード分析を実行し、低複雑性レジームに固定します。")
+            # 最も効率的なLOWレジームを即座に返す
+            return 10.0, ComplexityRegime.LOW
 
-                self.nlp = spacy.load(spacy_model_name)
-                logger.info(f"spaCy model '{spacy_model_name}' loaded successfully for advanced complexity analysis.")
-            except (ImportError, OSError, SystemExit) as e:
-                logger.warning(
-                    f"Could not load or download spaCy model '{spacy_model_name}'. Error: {e}. "
-                    f"Please run 'pip install spacy && python -m spacy download {spacy_model_name}' to enable advanced analysis. "
-                    "Falling back to keyword-based analysis."
-                )
-                self.nlp = None
+        # 1. 学習データから提案を取得
+        if self.learner:
+            suggestion = self.learner.get_suggestion(prompt)
+            if suggestion:
+                logger.info(f"学習済みの提案が見つかりました: 複雑性レジームを '{suggestion.value}' に設定します。")
+                if suggestion == ComplexityRegime.LOW: return 15.0, suggestion
+                if suggestion == ComplexityRegime.MEDIUM: return 50.0, suggestion
+                if suggestion == ComplexityRegime.HIGH: return 85.0, suggestion
+
+        # ... (以降の処理は変更なし)
+        # 2. 言語を検出
+        lang = self._detect_language(prompt)
+        
+        # 3. 高度なNLP分析を試行
+        nlp = self._get_spacy_model(lang)
+        if nlp and len(prompt.split()) > 10:
+            logger.info(f"'{lang}'言語のNLPベース高度分析を実行します。")
+            doc = nlp(prompt)
+            complexity_score = self._nlp_enhanced_analysis(doc)
         else:
-            logger.warning(
-                "spaCy library not found. "
-                "Please run 'pip install spacy' to enable advanced analysis. "
-                "Falling back to keyword-based analysis."
-            )
+            # 4. NLPが利用できない場合、キーワードベース分析にフォールバック
+            logger.info(f"'{lang}'言語のキーワードベース分析を実行します。")
+            complexity_score = self._keyword_based_analysis(prompt, lang)
+        
+        logger.info(f"算出された複雑性スコア: {complexity_score:.2f}")
 
-    def _keyword_based_analysis(self, prompt: str) -> float:
-        """Performs the original keyword-based complexity analysis."""
-        logger.debug("Performing keyword-based complexity analysis.")
+        if complexity_score < 30:
+            regime = ComplexityRegime.LOW
+        elif complexity_score < 70:
+            regime = ComplexityRegime.MEDIUM
+        else:
+            regime = ComplexityRegime.HIGH
+        
+        logger.info(f"決定された複雑性レジーム: {regime.value}")
+        return complexity_score, regime
+
+    # ... (_detect_language, _get_spacy_model, _keyword_based_analysis, _nlp_enhanced_analysis は変更なし)
+    def _detect_language(self, text: str) -> str:
+        """プロンプトの言語を検出する。"""
+        try:
+            # プロンプトが短いと誤判定しやすいため、ある程度の長さがある場合のみ検出
+            if len(text) > 20:
+                lang = detect(text)
+                logger.info(f"検出された言語: {lang}")
+                return lang
+            else:
+                logger.info("プロンプトが短すぎるため、デフォルト言語（英語）を使用します。")
+                return 'en'
+        except LangDetectException:
+            logger.warning("言語の検出に失敗しました。デフォルト言語（英語）を使用します。")
+            return 'en'
+
+    def _get_spacy_model(self, lang: str):
+        """言語に応じたspaCyモデルをロードする。"""
+        if lang in self.nlp_models:
+            return self.nlp_models[lang]
+
+        model_name = self.spacy_model_map.get(lang)
+        if not model_name:
+            logger.warning(f"言語 '{lang}' に対応するspaCyモデルが定義されていません。")
+            return None
+            
+        try:
+            if not spacy.util.is_package(model_name):
+                logger.info(f"spaCyモデル '{model_name}' が見つかりません。ダウンロードを試みます...")
+                spacy.cli.download(model_name)
+                logger.info(f"モデル '{model_name}' のダウンロードが完了しました。")
+            
+            nlp = spacy.load(model_name)
+            logger.info(f"spaCyモデル '{model_name}' のロードに成功しました。")
+            self.nlp_models[lang] = nlp # 成功したらキャッシュ
+            return nlp
+        except (ImportError, OSError, SystemExit) as e:
+            logger.error(
+                f"spaCyモデル '{model_name}' のロードまたはダウンロードに失敗しました: {e}\n"
+                f"高度な分析を有効にするには、手動でインストールしてください: python -m spacy download {model_name}"
+            )
+            self.nlp_models[lang] = None # 失敗もキャッシュして再試行を防ぐ
+            return None
+
+    def _keyword_based_analysis(self, prompt: str, lang: str) -> float:
+        """言語に応じたキーワードセットを使用して複雑性を分析する。"""
+        keywords = self.keyword_sets.get(lang, self.keyword_sets['en'])
         prompt_lower = prompt.lower()
         
-        # 1. Length Score
         length_score = min(len(prompt.split()) / 5.0, 40)
 
-        # 2. Structure Score
         structural_complexity = 0
-        conditional_patterns = ['if', 'when', 'unless', 'provided that', 'given that']
-        structural_complexity += sum(prompt_lower.count(p) for p in conditional_patterns) * 3
-        hierarchy_indicators = ['first', 'second', 'then', 'next', 'finally', 'step']
-        structural_complexity += sum(1 for word in prompt_lower.split() if word in hierarchy_indicators) * 2
-        constraint_patterns = ['must', 'cannot', 'should not', 'requires', 'constraint']
-        structural_complexity += sum(prompt_lower.count(p) for p in constraint_patterns) * 4
+        structural_complexity += sum(prompt_lower.count(p) for p in keywords['conditional']) * 3
+        structural_complexity += sum(1 for word in prompt_lower.split() if word in keywords['hierarchy']) * 2
+        structural_complexity += sum(prompt_lower.count(p) for p in keywords['constraint']) * 4
         structure_score = min(structural_complexity, 30)
 
-        # 3. Domain Score
         domain_complexity = 0
-        math_keywords = ['calculate', 'solve', 'equation', 'algorithm', 'optimization']
-        planning_keywords = ['plan', 'strategy', 'design', 'organize', 'coordinate']
-        analysis_keywords = ['analyze', 'compare', 'evaluate', 'assess', 'consider']
-        if any(kw in prompt_lower for kw in math_keywords): domain_complexity += 15
-        if any(kw in prompt_lower for kw in planning_keywords): domain_complexity += 20
-        if any(kw in prompt_lower for kw in analysis_keywords): domain_complexity += 15
+        if any(kw in prompt_lower for kw in keywords['math']): domain_complexity += 15
+        if any(kw in prompt_lower for kw in keywords['planning']): domain_complexity += 20
+        if any(kw in prompt_lower for kw in keywords['analysis']): domain_complexity += 15
         domain_score = min(domain_complexity, 30)
 
         weights = {'length': 0.2, 'structure': 0.4, 'domain': 0.4}
@@ -81,12 +164,11 @@ class AdaptiveComplexityAnalyzer:
         
         return min(max(total_score, 0), 100.0)
 
-    def _nlp_enhanced_analysis(self, prompt: str) -> float:
-        """Performs an advanced complexity analysis using spaCy."""
-        logger.debug("Performing NLP-enhanced complexity analysis.")
-        doc = self.nlp(prompt)
-
-        # 1. Syntactic Complexity
+    def _nlp_enhanced_analysis(self, doc) -> float:
+        """
+        言語に依存しない、spaCyのDocオブジェクトを使用した高度な複雑性分析。
+        """
+        # Syntactic Complexity (構文の複雑さ)
         sentences = list(doc.sents)
         num_sentences = len(sentences)
         if num_sentences == 0: return 5.0
@@ -95,7 +177,7 @@ class AdaptiveComplexityAnalyzer:
         syntactic_score = (num_sentences * 1.5) + (avg_sent_length * 0.5) + (num_noun_chunks * 1.0)
         normalized_syntactic = min(syntactic_score / 40.0, 1.0) * 100
 
-        # 2. Lexical Richness
+        # Lexical Richness (語彙の豊富さ)
         num_entities = len(doc.ents)
         unique_entity_labels = len(set(ent.label_ for ent in doc.ents))
         entity_score = (num_entities * 2.0) + (unique_entity_labels * 3.0)
@@ -104,13 +186,13 @@ class AdaptiveComplexityAnalyzer:
         lexical_score = entity_score + lexical_diversity_score
         normalized_lexical = min(lexical_score / 50.0, 1.0) * 100
 
-        # 3. Cognitive Task Demand
-        cognitive_keywords = {'compare', 'contrast', 'analyze', 'evaluate', 'synthesize', 'create', 'argue', 'derive', 'prove'}
+        # Cognitive Task Demand (認知的タスクの要求度)
+        cognitive_keywords = {'compare', 'contrast', 'analyze', 'evaluate', 'synthesize', 'create', 'argue', 'derive', 'prove', '比較', '対比', '分析', '評価', '統合', '創造', '議論', '導出', '証明'}
         cognitive_lemmas = {token.lemma_.lower() for token in doc if token.pos_ == 'VERB'}
         cognitive_demand_score = len(cognitive_keywords.intersection(cognitive_lemmas)) * 10
-        wh_words = {token.lemma_.lower() for token in doc if token.tag_ in ['WDT', 'WP', 'WP$', 'WRB']}
+        wh_words = {token.lemma_.lower() for token in doc if token.tag_ in ['WDT', 'WP', 'WP$', 'WRB'] or 'なぜ' in token.text or 'どのように' in token.text}
         if wh_words:
-            cognitive_demand_score += 15 if 'why' in wh_words or 'how' in wh_words else 5
+            cognitive_demand_score += 15 if any(w in wh_words for w in ['why', 'how', 'なぜ', 'どのように']) else 5
         normalized_cognitive = min(cognitive_demand_score / 30.0, 1.0) * 100
 
         weights = {'syntactic': 0.40, 'lexical': 0.35, 'cognitive': 0.25}
@@ -123,35 +205,3 @@ class AdaptiveComplexityAnalyzer:
             f"Lexical={normalized_lexical:.2f}, Cognitive={normalized_cognitive:.2f}"
         )
         return min(max(total_score, 0), 100.0)
-
-    def analyze_complexity(self, prompt: str) -> Tuple[float, ComplexityRegime]:
-        """
-        Analyzes the prompt's complexity using NLP if available, otherwise falls back
-        to a keyword-based method.
-        """
-        complexity_score: float
-        if self.nlp and len(prompt.split()) > 10:
-            try:
-                logger.info("Performing NLP-enhanced complexity analysis.")
-                complexity_score = self._nlp_enhanced_analysis(prompt)
-            except Exception as e:
-                logger.error(f"An error occurred during NLP analysis: {e}. Falling back to keyword-based method.")
-                complexity_score = self._keyword_based_analysis(prompt)
-        else:
-            if self.nlp:
-                logger.info("Prompt is too short for NLP analysis, using keyword-based method.")
-            else:
-                logger.info("Performing keyword-based complexity analysis.")
-            complexity_score = self._keyword_based_analysis(prompt)
-
-        logger.info(f"Calculated complexity score: {complexity_score:.2f}")
-
-        if complexity_score < 30:
-            regime = ComplexityRegime.LOW
-        elif complexity_score < 70:
-            regime = ComplexityRegime.MEDIUM
-        else:
-            regime = ComplexityRegime.HIGH
-        
-        logger.info(f"Determined complexity regime: {regime.value}")
-        return complexity_score, regime
