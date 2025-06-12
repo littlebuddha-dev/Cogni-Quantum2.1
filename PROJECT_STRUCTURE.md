@@ -1,6 +1,7 @@
 # CogniQuantum Project Structure
 
 This document outlines the directory and file structure of the CogniQuantum project.
+
 ```
 .
 ├── .gitignore
@@ -16,11 +17,13 @@ This document outlines the directory and file structure of the CogniQuantum proj
 ├── llm_api/
 │   ├── init.py
 │   ├── config.py
+│   ├── quantum_engine.py
 │   ├── cogniquantum/
 │   │   ├── init.py
 │   │   ├── analyzer.py
 │   │   ├── engine.py
 │   │   ├── enums.py
+│   │   ├── learner.py
 │   │   ├── system.py
 │   │   └── tracker.py
 │   ├── providers/
@@ -58,92 +61,93 @@ This document outlines the directory and file structure of the CogniQuantum proj
 ├── test_cli.py
 ├── test_cogniquantum.py
 └── test_providers.py
-
 ```
-
 ## Directory and File Overview
 
 ### Root Directory
 
-- **`.gitignore`**: Specifies files and directories that Git version control should ignore.
+- **`.gitignore`**: Specifies files and directories that Git should ignore.
 - **`fetch_llm_v2.py`**: A simple entry point that starts the command-line interface. The main logic resides in the `cli/` directory.
 - **`installation_guide.md`**: A detailed guide for setting up and installing the project.
 - **`PROJECT_STRUCTURE.md`**: This file, outlining the project's structure.
 - **`quick_test_v2.py`**: A diagnostic script to quickly verify the user's environment setup (API keys, Ollama connection, etc.).
 - **`README.md`**: The main documentation file containing the project's overview, purpose, features, and usage instructions.
 - **`requirements.txt`**: Lists the Python libraries and their versions required to run the project.
-- **`test_all_v2_providers.py`**: A comprehensive test script that checks the operation of all configured V2 providers in each mode and performs simple performance measurements.
+- **`test_all_v2_providers.py`**: A comprehensive test script that checks the operation of all configured V2 providers in each mode.
 
 ### cli/
 
 This directory contains all the logic for the command-line interface.
 
 - **`__init__.py`**: Allows the cli directory to be treated as a Python package.
-- **`handler.py`**: The core logic class of the CLI. It handles request processing, provider fallbacks, and generating suggestions.
-- **`main.py`**: The main entry point of the CLI application. It handles argument parsing (including new RAG flags like `--rag` and `--wikipedia`) and orchestrates the overall execution flow.
+- **`handler.py`**: The core logic class of the CLI. It handles request processing, provider fallbacks (V2 Enhanced -> Standard), and generating suggestions.
+- **`main.py`**: The main entry point of the CLI application. It handles argument parsing (including RAG flags like `--rag` and `--wikipedia`) and orchestrates the execution flow.
 
 ### examples/
 
-This directory contains sample scripts and data files demonstrating the project's functionality.
+Contains sample scripts and data files demonstrating the project's functionality.
 
-- **`sample_questions.txt`**: A list of sample questions for testing each mode: efficient, balanced, and decomposed.
-- **`v2_demo_script.sh`**: The latest shell script for trying out various modes and providers using `fetch_llm_v2.py`.
+- **`sample_questions.txt`**: A list of sample questions for testing each mode.
+- **`v2_demo_script.sh`**: The latest shell script for trying out various modes and providers.
 
 ### llm_api/
 
 The main package containing the core reasoning logic and communication with LLM providers.
 
 - **`__init__.py`**: Allows the llm_api directory to be treated as a Python package.
+- **`config.py`**: Provides centralized settings management using Pydantic, loading configuration from a `.env` file. It includes a setting to limit Ollama concurrency to prevent server crashes.
+- **`quantum_engine.py`**: Implements the quantum-inspired reasoning approach, which generates a superposition of diverse hypotheses and collapses them into a single, robust solution.
 
 #### cogniquantum/
 
 The core of the CogniQuantum V2 system, broken down by responsibility.
 
-- **`__init__.py`**: Exposes the main `CogniQuantumSystemV2` class to the outside.
-- **`analyzer.py`**: Contains the `AdaptiveComplexityAnalyzer` class for analyzing prompt complexity using NLP and keyword-based methods.
-- **`engine.py`**: Contains the `EnhancedReasoningEngine` which executes different reasoning strategies (low, medium, high complexity) based on the analysis.
+- **`__init__.py`**: Exposes the main `CogniQuantumSystemV2` class.
+- **`analyzer.py`**: Contains the `AdaptiveComplexityAnalyzer` for analyzing prompt complexity using multi-language NLP and keyword-based methods.
+- **`engine.py`**: Contains the `EnhancedReasoningEngine` which executes different reasoning strategies. For high-complexity problems, it uses a sequential integration method to avoid errors from long prompts.
 - **`enums.py`**: Defines enumerations used in the system, such as `ComplexityRegime`.
-- **`system.py`**: Contains the `CogniQuantumSystemV2` class, which orchestrates the entire problem-solving process, including RAG and tool use integration.
-- **`tracker.py`**: Contains data classes for tracking performance metrics and solutions, such as `ReasoningMetrics` and `SolutionTracker`.
+- **`learner.py`**: Implements the `ComplexityLearner`, which records successful prompt-regime pairings to improve future complexity analysis.
+- **`system.py`**: Contains the `CogniQuantumSystemV2` class, which orchestrates the entire problem-solving process, integrating RAG, tool use, and different reasoning pipelines (e.g., parallel, quantum-inspired).
+- **`tracker.py`**: Contains data classes for tracking performance metrics and solutions.
 
 #### providers/
 
-A collection of modules responsible for the actual communication with LLM services.
+Modules responsible for communication with LLM services.
 
-- **`__init__.py`**: Provides a factory function to dynamically import providers and return the appropriate provider instance upon request.
-- **`base.py`**: Defines the abstract base classes (`LLMProvider`, `EnhancedLLMProvider`) that all provider classes inherit from.
-- **`openai.py`, `claude.py`, `gemini.py`, `ollama.py`, `huggingface.py`**: Basic provider classes that call the standard APIs for each LLM service.
-- **`enhanced_*_v2.py`**: Advanced providers that integrate the functionality of the CogniQuantum system. They wrap the standard providers to execute complexity-adaptive reasoning.
+- **`__init__.py`**: A factory function to dynamically import and instantiate the appropriate provider.
+- **`base.py`**: Defines the abstract base classes (`LLMProvider`, `EnhancedLLMProvider`). The `EnhancedLLMProvider` now centralizes the core V2 logic.
+- **`openai.py`, `claude.py`, etc.**: Standard provider classes for each LLM service.
+- **`enhanced_*_v2.py`**: Advanced providers that wrap standard providers to execute complexity-adaptive reasoning, delegating common logic to the base class.
 
 #### rag/
 
-This directory contains the Retrieval-Augmented Generation (RAG) functionality, responsible for fetching external knowledge to augment prompts.
+Retrieval-Augmented Generation (RAG) functionality.
 
-- **`__init__.py`**: Exposes the main `RAGManager`.
-- **`knowledge_base.py`**: Manages loading and vectorizing documents from local files and URLs into a transient vector store.
-- **`manager.py`**: The central orchestrator for RAG. It decides whether to search Wikipedia or a knowledge base, extracts optimized search queries from user prompts, and constructs the final augmented prompt.
-- **`retriever.py`**: A simple retriever class that searches the vector store created by `knowledge_base.py`.
+- **`__init__.py`**: Exposes the `RAGManager`.
+- **`knowledge_base.py`**: Manages loading and vectorizing documents from files/URLs using updated LangChain components.
+- **`manager.py`**: The central RAG orchestrator. It uses an LLM to extract optimized search queries from user prompts before retrieving information from Wikipedia or a local knowledge base.
+- **`retriever.py`**: A retriever class that uses the recommended `invoke` method for searching the vector store.
 
 #### tools/
 
-A package for external tools that can be called by the system.
+A package for external tools.
 
-- **`__init__.py`**: Initializes the tools package.
-- **`image_retrieval.py`**: A tool to search for images on the web using the SerpApi service, triggered by keywords in the user's prompt.
+- **`__init__.py`**: Initializes the tools package. Image retrieval is currently disabled by default.
+- **`image_retrieval.py`**: A tool to search for images on the web (currently not activated).
 
 #### utils/
 
-Helper functions and auxiliary classes used throughout the project.
+Helper functions and auxiliary classes.
 
 - **`__init__.py`**: Allows the utils directory to be treated as a Python package.
-- **`helper_functions.py`**: Provides auxiliary functions, such as reading from files/pipes and formatting JSON.
+- **`helper_functions.py`**: Provides auxiliary functions, such as reading from pipes/files and formatting JSON.
 - **`performance_monitor.py`**: Measures performance metrics like processing time and token usage.
 
 ### tests/
 
-This directory contains unit and integration tests for the project.
+Unit and integration tests for the project.
 
 - **`__init__.py`**: Allows the tests directory to be treated as a Python package.
-- **`test_cli.py`**: Tests the command-line arguments and fallback functionality of `fetch_llm_v2.py`.
-- **`test_cogniquantum.py`**: Tests the complexity analysis and reasoning logic of the `cogniquantum` module.
-- **`test_providers.py`**: Tests the dynamic loading and caching features of the providers.
+- **`test_cli.py`**: Tests the command-line arguments and functionality.
+- **`test_cogniquantum.py`**: Tests the complexity analysis and reasoning logic.
+- **`test_providers.py`**: Tests the dynamic loading and caching of providers.

@@ -2,568 +2,227 @@
 
 ## Breaking Through "The Illusion of Thinking" - A Research-Based Implementation
 
-**CogniQuantum** is a revolutionary LLM interface that implements solutions to overcome the fundamental limitations identified in Apple Research's groundbreaking paper ["The Illusion of Thinking: Understanding the Strengths and Limitations of Reasoning Models via the Lens of Problem Complexity"](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf).
+**CogniQuantum** は、Apple Researchの画期的な論文["The Illusion of Thinking"](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf)で特定された根本的な限界を克服するソリューションを実装した革新的なLLMインターフェースです。このアップデート版では、Retrieval-Augmented Generation (RAG)、量子インスピレーション推論、自己改善複雑性分析などの強力な新機能を導入しています。
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Paper](https://img.shields.io/badge/Paper-Apple_Research-orange.svg)](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf)
-[![Status](https://img.shields.io/badge/Status-Research_Implementation-brightgreen.svg)](README.md)
+[![Status](https://img.shields.io/badge/Status-Research_Implementation_v2-brightgreen.svg)](README.md)
 
 ---
 
-## 🚀 **Breakthrough Implementation**
+## 🚀 **主要機能とモード**
 
-### **Critical Problems Identified by Apple Research**
+### **研究ベースの推論モード**
 
-The seminal paper "The Illusion of Thinking" revealed four fundamental limitations in Large Reasoning Models (LRMs):
+あらゆる複雑性に対応する推論モードスイートを提供し、新しい戦略で強化されています。
 
-1. **🔄 Scaling Breakdown**: Thinking tokens decrease counterintuitively as complexity increases beyond thresholds
-2. **🤔 Overthinking Phenomenon**: Continued exploration after finding correct solutions in low-complexity problems  
-3. **📊 Three Performance Regimes**: Distinct behavior patterns across low, medium, and high complexity levels
-4. **⚙️ Algorithm Execution Failure**: Poor performance even when explicit algorithms are provided
-5. **🎯 Inconsistent Reasoning**: Performance varies dramatically across puzzle types of similar complexity
+| モード | 対象複雑性 | 主要メリット | 使用例 |
+|---|---|---|---|
+| `efficient` | 低 | **過度思考防止** | 簡単な質問、基本タスク |
+| `balanced` | 中 | 最適推論品質 | 標準分析、説明 |
+| `decomposed` | 高 | **破綻防止と速度** | 複雑問題解決、システム設計 |
+| `adaptive` | 自動検出 | **動的最適化** | 複雑性不明または混合質問 |
+| `parallel` | 全て | **最高品質** | ミッションクリティカル、最高品質要求 |
+| `quantum_inspired` | 全て | 包括的統合洞察 | ブレインストーミング、哲学的質問、戦略 |
+| `edge` | 低 | 軽量・高速 | 低リソースデバイス、クイックチェック |
+| `paper_optimized` | 全て | 完全研究統合 | 最大研究効果、ベンチマーク |
 
-### **The very first thing to do**
-Most first enter the API key in the .env file or run the Ollama server on your local computer.
-For Ollama server, change the model name in the code.
+### **高度機能**
 
-### **Our Revolutionary Solutions**
-
-#### **1. Complexity-Adaptive Reasoning Architecture**
-```bash
-# Automatic complexity detection and optimal strategy selection
-python fetch_llm_v2.py openai "complex problem" --mode adaptive
-```
-
-#### **2. Overthinking Prevention System**
-```bash  
-# Efficiency optimization for low-complexity problems
-python fetch_llm_v2.py claude "simple question" --mode efficient
-```
-
-#### **3. Collapse-Prevention Decomposition Strategy**
-```bash
-# Staged decomposition for high-complexity problems
-python fetch_llm_v2.py openai "extremely complex system design" --mode decomposed
-```
-
-#### **4. Quantum-Inspired Synthesis**
-```bash
-# Holistic synthesis from diverse viewpoints
-python fetch_llm_v2.py openai "Analyze the future of AI in society" --mode quantum_inspired
-```
+- **自動複雑性分析**: リアルタイム多言語問題複雑性評価
+- **自己改善分析**: 過去のやり取りから学習し、将来をより賢く決定
+- **動的戦略選択**: 問題ごとに最適な推論アプローチを選択
+- **検索拡張生成 (RAG)**: **Wikipedia**またはローカルファイル/URLからの外部知識でプロンプトを拡張
+- **過度思考・破綻防止**: 効率性と推論品質を維持するコアメカニズム
+- **マルチプロバイダーサポート**: OpenAI, Claude, Gemini, Ollama, HuggingFace
+- **構造化思考プロセス**: 完全な透明性のための詳細推論ステップ出力
 
 ---
 
-## 📊 **Proven Performance Improvements**
+## 🛠️ インストールとクイックスタート
 
-### **Three-Regime Complexity Management**
-
-| Complexity Regime | Legacy Problems | V2 Solutions | Improvement |
-|-------------------|----------------|--------------|-------------|
-| **Low Complexity** | Overthinking | Efficiency Mode | **+60% Token Efficiency** |
-| **Medium Complexity** | Unstable Reasoning | Balanced Reasoning | **+45% Consistency** |
-| **High Complexity** | Complete Collapse | Decomposition Strategy | **+80% Success Rate** |
-
-### **Benchmark Results vs. Paper Predictions**
-
-| Puzzle Environment | Paper Baseline | V2 Performance | Theoretical Max |
-|-------------------|----------------|----------------|-----------------|
-| **Tower of Hanoi (N=8)** | 45% | **78%** | ~80% |
-| **Checker Jumping (N=6)** | 32% | **71%** | ~75% |
-| **River Crossing (N=4)** | 28% | **69%** | ~70% |
-| **Blocks World (N=12)** | 15% | **63%** | ~65% |
-
----
-
----
-## 🛠️ Installation & Quick Start
-
-### **Requirements**
+### **必要環境**
 - Python 3.10+
-- `pip install -r requirements.txt` (Installs all dependencies including `langdetect`)
-- At least one LLM provider API key or local Ollama setup
+- 全依存関係インストール: `pip install -r requirements.txt`
+- 最低1つのLLMプロバイダーAPIキーまたはローカルOllamaセットアップ
 
-
-### **Enabling Advanced Multi-Language Analysis (Optional)**
-
-To enable the most accurate complexity analysis for languages other than English, you need to download the corresponding `spaCy` models. The system will attempt to do this automatically, but you can also do it manually.
-
-**For Japanese:**
+### **セットアップ**
 ```bash
-python -m spacy download ja_core_news_sm
-```
-### **Setup**
-```bash
-# Clone the repository
+# リポジトリをクローン
 git clone https://github.com/littlebuddha-dev/Cogni-Quantum.git
-cd cogniquantum
+cd Cogni-Quantum
 
-# Install dependencies
-pip install aiohttp openai-whisper python-dotenv numpy httpx
+# 必要な依存関係をすべてインストール
+pip install -r requirements.txt
 
-# Configure API keys
+# 環境ファイルを作成・設定
 cp .env.example .env
-# Edit .env with your API keys
+# APIキー（OPENAI_API_KEY等）で.envを編集
 
-# Test the system
+# セットアップをテスト
 python quick_test_v2.py
 ```
 
-### **Immediate Usage**
+### **即座の使用**
+
 ```bash
-# Basic efficiency test
-python fetch_llm_v2.py ollama "What is 2+2?" --mode efficient
+# 基本効率テスト
+python fetch_llm_v2.py ollama "日本の首都は何ですか？" --mode efficient
 
-# Complex reasoning test  
-python fetch_llm_v2.py claude "Design a sustainable urban transportation system" --mode decomposed
+# 破綻防止による複雑推論
+python fetch_llm_v2.py claude "持続可能な都市交通システムを設計してください。" --mode decomposed
 
-# Paper-optimized analysis
-python fetch_llm_v2.py openai "Analyze the intersection of AI, quantum computing, and climate change" --mode paper_optimized
+# 複雑性不明の適応モード
+python fetch_llm_v2.py openai "雇用市場におけるAIの経済的影響を分析してください。" --mode adaptive
+
+# 深い洞察のための量子インスピレーション統合
+python fetch_llm_v2.py openai "意識の本質とは何か？" --mode quantum_inspired
+
+# Wikipedia使用のRAG駆動クエリ
+python fetch_llm_v2.py openai "LIGO実験の主要発見は何でしたか？" --mode balanced --wikipedia
 ```
 
 ---
 
-## 🎯 **Core Features & Modes**
+## 🎮 使用例
 
-### **Research-Based Reasoning Modes**
-
-| Mode | Target Complexity | Primary Benefit | Use Case |
-|------|------------------|-----------------|----------|
-| `efficient` | Low | Overthinking Prevention | Quick questions, basic tasks |
-| `balanced` | Medium | Optimal Reasoning Quality | Analysis, explanations |
-| `decomposed` | High | Collapse Prevention & Speed | Complex problem-solving |
-| `adaptive` | Auto-detected | Dynamic Optimization | Unknown complexity |
-| `parallel` | All | **Best-of-Breed Quality** | **Maximum quality, mission-critical tasks** |
-| `paper_optimized` | All | Complete Research Integration | Maximum quality needed |
-
-### **Advanced Features**
-
-- **Automatic Complexity Analysis**: Real-time problem complexity assessment.
-- **Real-time Complexity Adjustment**: Automatically re-evaluates and escalates the reasoning strategy if the initial response is insufficient.
-- **Dynamic Strategy Selection**: Optimal reasoning approach per problem type.
-- **Overthinking Detection**: Prevents unnecessary token usage.
-- **Collapse Prevention**: Maintains reasoning quality at high complexity.
-- **Multi-Provider Support**: OpenAI, Claude, Gemini, Ollama, HuggingFace.
-- **Performance Monitoring**: Detailed metrics and analysis.
-
----
-
-## 🔬 **Scientific Validation**
-
-### **Complexity Regime Detection**
-The system automatically classifies problems into the three regimes identified in the paper:
+### **RAGを使った学術研究**
 
 ```bash
-# See complexity analysis in action
-python fetch_llm_v2.py openai "analyze this problem" --complexity-analysis --analyze-only
-```
-
-**Example Output:**
-```json
-{
-  "complexity_score": 3.47,
-  "regime": "high", 
-  "recommended_approach": "decomposition_staged",
-  "overthinking_risk": "low",
-  "collapse_prevention": "active"
-}
-```
-
-### **Real-World Validation**
-
-**High-Complexity Problem Test:**
-```bash
-python fetch_llm_v2.py ollama "Design an integrated strategy for quantum computing, AI, and climate change solutions for the 2030s" --mode paper_optimized --model "deepseek-r1"
-```
-
-**Actual Result:**
-- ✅ **Complexity Score: 9.93** (High regime correctly detected)
-- ✅ **Collapse Prevention: Active** (No reasoning breakdown)
-- ✅ **12-minute deep reasoning** (Proper token allocation)
-- ✅ **Academic-quality output** (Structured, comprehensive analysis)
-
----
-
-## 📈 **Architecture & Implementation**
-
-### **Core Components**
-
-```mermaid
-graph TD
-    A[fetch_llm_v2.py] --> B[CogniQuantumCLI]
-    B --> C[ComplexityAnalyzer]
-    B --> D[CogniQuantumSystemV2]
-    B --> E[EnhancedReasoningEngine]
-    
-    D --> F[OverthinkingPrevention]
-    D --> G[CollapsePreventionEngine] 
-    D --> H[AdaptiveComplexityRouter]
-    D --> I[TokenOptimizer]
-    
-    E --> J[LowComplexityHandler]
-    E --> K[MediumComplexityHandler]
-    E --> L[HighComplexityHandler]
-```
-
-### **Research Implementation Pipeline**
-
-1. **Complexity Analysis**: Multi-dimensional problem assessment
-2. **Regime Classification**: Automatic low/medium/high complexity routing
-3. **Strategy Optimization**: Regime-specific reasoning approaches
-4. **Overthinking Control**: Early solution detection and prevention
-5. **Collapse Prevention**: High-complexity decomposition strategies
-6. **Quality Assurance**: Logical consistency and execution accuracy
-
----
-
-## 🎮 **Usage Examples**
-
-### **Academic Research**
-```bash
-# Literature review and critical analysis
+# Wikipediaからの最新情報でクエリを拡張
 python fetch_llm_v2.py claude \
-"Compare three recent transformer architectures, analyzing theoretical foundations, experimental validity, and future research directions" \
---mode balanced --complexity-analysis
+"最近の発見に基づいて、量子コンピューティングの主要課題は何ですか？" \
+--mode balanced --wikipedia
 ```
 
-### **Business Strategy**
-```bash  
-# Comprehensive market analysis
-python fetch_llm_v2.py openai \
-"Develop a Southeast Asian market entry strategy considering technical, legal, cultural, and competitive factors" \
---mode decomposed --paper-mode
-```
+### **ビジネス戦略統合**
 
-### **Technical Problem Solving**
 ```bash
-# System architecture design  
+# 量子インスピレーションモードで多面的戦略を生成
+python fetch_llm_v2.py openai \
+"楽観的、悲観的、倫理的観点を考慮して、ヨーロッパでのAIスタートアップの包括的市場参入戦略を開発してください。" \
+--mode quantum_inspired
+```
+
+### **技術問題解決**
+
+```bash
+# 分解戦略を使った複雑システム設計
 python fetch_llm_v2.py ollama \
-"Design a high-availability, scalable distributed system architecture" \
+"ソーシャルメディアアプリの高可用性・スケーラブルマイクロサービスアーキテクチャを設計してください。" \
 --mode decomposed --model deepseek-r1
 ```
 
-### **Efficiency Testing**
-```bash
-# Overthinking prevention demonstration
-python fetch_llm_v2.py openai "What are the primary colors?" --mode efficient
-# → Quick, direct answer without unnecessary analysis
+---
+
+## 🔬 アーキテクチャと実装
+
+V2アーキテクチャは、RAG、自己学習、高度推論パイプラインの新コンポーネントを統合します。
+
+### **コアコンポーネント**
+
+```mermaid
+graph TD
+    A[fetch_llm_v2.py] --> B[CLI Handler]
+    B --> C[CogniQuantumSystemV2]
+    
+    subgraph CogniQuantumSystemV2
+        D[ComplexityAnalyzer] -- reads --> E[ComplexityLearner]
+        F[EnhancedReasoningEngine]
+        G[QuantumReasoningEngine]
+        H[RAGManager]
+    end
+
+    C -- orchestrates --> F
+    C -- orchestrates --> G
+    C -- orchestrates --> H
+    F -- executes --> I[Provider API]
+    G -- executes --> I
+    H -- augments prompt for --> C
+
+    E -- saves/loads --> J[learnings.json]
+    H -- retrieves from --> K[Wikipedia/Files]
 ```
+
+### **研究実装パイプライン**
+
+1. **入力**: ユーザープロンプトを受信
+2. **RAG（オプション）**: RAGManagerが検索クエリを抽出し、Wikipediaまたはローカルファイルからコンテキストを取得してプロンプトを拡張
+3. **複雑性分析**: AdaptiveComplexityAnalyzerが複雑性を評価、ComplexityLearnerからの提案を利用可能
+4. **パイプライン選択**: 選択モードに基づいて推論パイプライン（EnhancedReasoningEngine、QuantumReasoningEngine、Parallel）を選択
+5. **実行**: 選択エンジンがプロンプトを処理し、レジーム固有戦略（分解、過度思考防止等）を適用
+6. **自己修正（適応モード）**: システムが不十分解を再評価し、別試行のため複雑性レジームをエスカレート可能
+7. **学習**: 複雑性が調整された場合、ComplexityLearnerが成功結果を記録して将来分析を改善
+8. **出力**: 詳細思考プロセスを含む最終構造化ソリューションを返す
 
 ---
 
-## 🧪 **Testing & Validation**
+## 🧪 テストと検証
 
-### **Comprehensive Test Suite**
+システム安定性とパフォーマンスを確保する包括的テストスイートを含みます。
+
 ```bash
-# System health check
+# クイックシステムヘルスチェック
 python quick_test_v2.py
 
-# Full performance analysis
+# 全利用可能V2プロバイダーとモードの包括テスト実行
 python test_all_v2_providers.py
-
-# Specific provider testing
-python test_all_v2_providers.py --providers ollama claude --modes efficient balanced
-```
-
-### **Benchmarking**
-```bash
-# Compare V2 vs traditional approaches
-python benchmarks/run_complexity_tests.py
-
-# Generate performance report
-python benchmarks/generate_paper_validation_report.py
 ```
 
 ---
 
-## 🤝 **Supported Providers**
+## 🤝 サポートプロバイダー
 
-| Provider | Standard | Enhanced V2 | Special Features |
-|----------|----------|-------------|------------------|
-| **OpenAI** | ✅ | ✅ | GPT-4 optimization, vision support |
-| **Claude** | ✅ | ✅ | Reasoning specialization, large context |
-| **Gemini** | ✅ | ✅ | Multimodal, speed optimization |
-| **Ollama** | ✅ | ✅ | Local models, privacy, cost-free |
-| **HuggingFace** | ✅ | ✅ | Open-source diversity, experimentation |
-
-### **Local Model Support (Ollama)**
-- **DeepSeek-R1**: Reasoning-specialized model with thinking tokens
-- **Gemma 3**: Efficient 8B parameter model  
-- **Phi-4**: Microsoft's reasoning-optimized model
-- **LLaVA**: Vision-language capabilities
+| プロバイダー | 標準 | 強化V2 | 特別機能 |
+|---|---|---|---|
+| OpenAI | ✅ | ✅ | GPT-4o最適化、ビジョンサポート |
+| Claude | ✅ | ✅ | 推論特化、大コンテキスト |
+| Gemini | ✅ | ✅ | マルチモーダル、速度最適化 |
+| Ollama | ✅ | ✅ | ローカルモデル、プライバシー、コスト無料、並行安全 |
+| HuggingFace | ✅ | ✅ | オープンソース多様性、実験 |
 
 ---
 
-## 📚 **Developer API**
+## 📚 開発者API
 
-### **Direct System Usage**
+コアロジックを他のPythonアプリケーションに直接統合できます。
+
+### **直接システム使用**
+
 ```python
-from llm_api.cogniquantum_v2 import CogniQuantumSystemV2, ComplexityRegime
-from llm_api.providers.openai import OpenAIProvider
+# /main_api_example.py
+# タイトル: API使用例
+# 役割: CogniQuantumSystemV2をPythonアプリケーションで直接使用する方法を示す
 
-# Initialize system
-provider = OpenAIProvider()
-system = CogniQuantumSystemV2(provider, {"model": "gpt-4o"})
+import asyncio
+from llm_api.providers import get_provider
+from llm_api.cogniquantum import CogniQuantumSystemV2, ComplexityRegime
 
-# Solve complex problem
-result = await system.solve_problem(
-    "Design a quantum-classical hybrid algorithm",
-    force_regime=ComplexityRegime.HIGH
-)
+async def run():
+    # 強化プロバイダーを取得
+    provider = get_provider('openai', enhanced=True)
+    
+    # プロバイダーのenhanced_callは内部でCogniQuantumSystemV2を使用
+    result = await provider.call(
+        "金融モデリング用の量子古典ハイブリッドアルゴリズムを設計してください。",
+        mode='decomposed'  # V2モードを使用
+    )
 
-print(f"Solution: {result['final_solution']}")
-print(f"Regime: {result['complexity_analysis']['regime']}")
-```
+    if not result.get('error'):
+        print("最終解決案:\n", result['text'])
+        # 構造化思考プロセスにアクセス
+        thought_process = result.get('paper_based_improvements', {}).get('thought_process', {})
+        print("\n思考プロセス:\n", thought_process)
 
-### **Custom Complexity Analysis**
-```python
-from llm_api.cogniquantum_v2 import AdaptiveComplexityAnalyzer
-
-analyzer = AdaptiveComplexityAnalyzer()
-complexity_score, regime = analyzer.analyze_complexity(your_prompt)
-
-if regime == ComplexityRegime.HIGH:
-    # Use decomposition strategy
-    pass
-elif regime == ComplexityRegime.LOW:
-    # Use efficiency mode
-    pass
-```
-
-### **Performance Monitoring**
-```python
-# Access detailed V2 metrics
-response = await enhanced_provider.call(prompt, mode="paper_optimized")
-v2_metrics = response.get('paper_based_improvements', {})
-
-print(f"Complexity Regime: {v2_metrics.get('complexity_regime')}")
-print(f"Overthinking Prevention: {v2_metrics.get('overthinking_prevention')}")
-print(f"Collapse Prevention: {v2_metrics.get('collapse_prevention')}")
+if __name__ == "__main__":
+    asyncio.run(run())
 ```
 
 ---
 
-## 🔧 **Configuration**
+## 📜 ライセンス
 
-### **Environment Variables**
-```bash
-# API Keys
-OPENAI_API_KEY="sk-..."
-CLAUDE_API_KEY="sk-ant-..."
-GEMINI_API_KEY="AIza..."
-HF_TOKEN="hf_..."
+MIT License - 詳細はLICENSEファイルを参照してください。
 
-# V2 System Configuration
-COGNIQUANTUM_V2_ENABLED="true"
-COGNIQUANTUM_V2_OVERTHINKING_PREVENTION="true"
-COGNIQUANTUM_V2_COLLAPSE_DETECTION="true"
-COGNIQUANTUM_V2_ADAPTIVE_COMPLEXITY="true"
-
-# Logging
-LOG_LEVEL="INFO"
-```
-
-### **Model Defaults**
-```bash
-OPENAI_DEFAULT_MODEL="gpt-4o"
-CLAUDE_DEFAULT_MODEL="claude-3-5-sonnet-20241022"
-GEMINI_DEFAULT_MODEL="gemini-1.5-pro-latest"
-OLLAMA_DEFAULT_MODEL="deepseek-r1"
-```
-
----
-
-## 🚨 **Troubleshooting**
-
-### **Common Issues**
-
-**V2 Features Not Working:**
-```bash
-# Check system status
-python fetch_llm_v2.py --v2-help
-
-# Force V2 mode
-python fetch_llm_v2.py openai "test" --force-v2 --mode adaptive
-
-# Debug logging
-export LOG_LEVEL=DEBUG
-python fetch_llm_v2.py claude "test" --mode paper_optimized
-```
-
-**API Connection Issues:**
-```bash
-# Check API keys
-cat .env
-
-# Test individual providers
-python quick_test_v2.py --provider-test openai
-python quick_test_v2.py --provider-test claude
-```
-
-**Ollama Setup:**
-```bash
-# Start Ollama server
-ollama serve
-
-# Install recommended models
-ollama pull deepseek-r1
-ollama pull gemma3
-ollama pull phi4-mini-reasoning
-
-# Verify installation
-ollama list
-```
-
----
-
-## 📖 **Research Background**
-
-### **Paper Citation**
-```bibtex
-@article{shojaee2025illusion,
-  title={The Illusion of Thinking: Understanding the Strengths and Limitations of Reasoning Models via the Lens of Problem Complexity},
-  author={Shojaee, Parshin and Mirzadeh, Iman and Alizadeh, Keivan and Horton, Maxwell and Bengio, Samy and Farajtabar, Mehrdad},
-  journal={Apple Research},
-  year={2025},
-  url={https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf}
-}
-```
-
-### **Related Research Areas**
-- Cognitive Load Theory in AI Systems
-- Complexity Science and LLM Performance
-- Meta-cognitive Functions in Large Language Models
-- Algorithmic Reasoning in Neural Networks
-
-### **Academic Impact**
-This implementation serves as:
-- **Empirical validation** of the paper's theoretical findings
-- **Practical solution** to identified LRM limitations  
-- **Research platform** for further complexity-adaptive reasoning studies
-- **Open-source reference** for the AI research community
-
----
-
-## 🤝 **Contributing**
-
-We welcome contributions from the research community! This project bridges theoretical AI research and practical implementation.
-
-### **How to Contribute**
-```bash
-# Fork and clone
-git clone https://github.com/your-username/cogniquantum.git
-cd cogniquantum
-
-# Create feature branch
-git checkout -b feature/your-enhancement
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-python -m pytest tests/ -v
-
-# Submit pull request
-```
-
-### **Contribution Areas**
-- 🧪 **Algorithm Improvements**: Enhanced complexity detection and reasoning strategies
-- 📊 **Benchmarking**: Additional puzzle environments and evaluation metrics
-- 🔧 **Provider Integration**: Support for new LLM providers and models
-- 📚 **Documentation**: Research explanations and usage examples
-- 🐛 **Bug Fixes**: Issues and performance improvements
-
-### **Research Contributions**
-- Implementation of new complexity analysis algorithms
-- Validation studies against additional reasoning benchmarks
-- Extensions to other types of cognitive limitations
-- Integration with other AI reasoning frameworks
-
----
-
-## 📜 **License**
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-### **Academic Use**
-This project is designed for academic and research use. When using this code in research:
-
-1. **Cite the original paper** (Apple Research)
-2. **Cite this implementation** (if used in your research)
-3. **Share improvements** with the community
-4. **Maintain academic integrity** in all research applications
-
-### **Disclaimer**
-This is an independent research implementation based on the publicly available Apple Research paper. It is not an official Apple product or implementation.
-
----
-
-## 🌟 **Acknowledgments**
-
-- **Apple Research Team** for the foundational "Illusion of Thinking" research
-- **DeepSeek Team** for the reasoning-specialized R1 model
-- **Ollama Community** for local LLM infrastructure
-- **Open Source AI Community** for continuous innovation
-
----
-...
-### **Mode Quick Reference**
-- ...
-- `quantum_inspired` → Holistic, synthesized insight
-- `edge` → Lightweight, for low-resource devices
-- `paper_optimized` → Maximum research benefit
-...
-
-### **Research Extensions**
-- [ ] Integration with cognitive architectures
-- [ ] Neuromorphic reasoning approaches
-- [ ] Causal reasoning enhancements
-- [ ] Multi-modal complexity analysis
-
----
-
-## 📞 **Community & Support**
-
-### **Research Community**
-Join our research community to:
-- Discuss latest findings in LLM reasoning
-- Share benchmark results and improvements
-- Collaborate on academic publications
-- Access early research previews
-
----
-
-## 🎯 **Quick Reference**
-
-### **Essential Commands**
-```bash
-# System check
-python quick_test_v2.py
-
-# Basic usage
-python fetch_llm_v2.py [provider] "[prompt]" --mode [mode]
-
-# Advanced usage  
-python fetch_llm_v2.py [provider] "[prompt]" --mode paper_optimized --force-v2
-
-# Performance testing
-python test_all_v2_providers.py
-
-# Help and documentation
-python fetch_llm_v2.py --v2-help
-```
-
-### **Mode Quick Reference**
-- `efficient` → Fast, overthinking prevention
-- `balanced` → Optimal quality/speed balance  
-- `decomposed` → Complex problem handling
-- `adaptive` → Automatic optimization
-- `paper_optimized` → Maximum research benefit
-
----
-
-**Ready to transcend the illusion of thinking? Start exploring the future of AI reasoning with CogniQuantum!** 🧠✨
-
-> *"Understanding limitations is the first step toward transcending them."*  
-> — Inspired by Apple Research, 2025
+これは公開されているApple Research論文に基づく独立研究実装であり、Apple公式製品ではありません。
