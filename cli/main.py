@@ -1,7 +1,8 @@
 # /cli/main.py
-"""
-CLIのエントリーポイントと引数解析
-"""
+# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/cli/main.py
+# タイトル: CLI main entrypoint with Wikipedia RAG option
+# 役割: CLIのエントリーポイントと引数解析。Wikipediaを知識源とするRAGオプションを追加する。
+
 import argparse
 import asyncio
 import json
@@ -57,7 +58,23 @@ async def main():
     parser.add_argument("--force-v2", action="store_true", help="V2機能強制使用")
     parser.add_argument("--no-fallback", action="store_true", help="フォールバック無効")
 
+    # RAGオプション
+    rag_group = parser.add_argument_group('RAG Options')
+    rag_group.add_argument("--rag", dest="use_rag", action="store_true", help="RAG機能を有効化")
+    rag_group.add_argument("--knowledge-base", dest="knowledge_base_path", help="RAGが使用するナレッジベースのファイルパスまたはURL")
+    rag_group.add_argument("--wikipedia", dest="use_wikipedia", action="store_true", help="RAG機能でWikipediaを知識源として使用")
+
+
     args = parser.parse_args()
+
+    # RAG関連の引数チェック
+    if args.use_rag and args.use_wikipedia and args.knowledge_base_path:
+        parser.error("--knowledge-base と --wikipedia は同時に使用できません。")
+    if args.use_rag and not (args.use_wikipedia or args.knowledge_base_path):
+        parser.error("--rag を使用するには --knowledge-base または --wikipedia の指定が必要です。")
+    if (args.use_wikipedia or args.knowledge_base_path) and not args.use_rag:
+         parser.error("--knowledge-base または --wikipedia を使用するには --rag の指定も必要です。")
+
 
     cli = CogniQuantumCLIV2Fixed()
 
@@ -125,7 +142,10 @@ async def main():
         'mode': args.mode,
         'system_prompt': args.system_prompt or "",
         'force_v2': args.force_v2,
-        'no_fallback': args.no_fallback
+        'no_fallback': args.no_fallback,
+        'use_rag': args.use_rag, 
+        'knowledge_base_path': args.knowledge_base_path,
+        'use_wikipedia': args.use_wikipedia
     }
     
     if args.model:
@@ -137,6 +157,8 @@ async def main():
 
     # リクエスト処理
     try:
+        # process_request_with_fallbackにkwargsを渡す必要があります
+        # cli.handler.pyの修正も必要です
         response = await cli.process_request_with_fallback(
             args.provider,
             prompt,
@@ -150,6 +172,10 @@ async def main():
             text_output = response.get("text", "") # エラー時は空文字
             print(text_output, end='') # 不要な改行を防ぐ
             
+            # 画像URLがあれば表示
+            if response.get('image_url'):
+                print(f"\n\n関連画像: {response['image_url']}")
+
             # エラーまたは付加情報がある場合は改行してから表示
             if response.get('error') or response.get('fallback_used') or response.get('version') == 'v2':
                 print() 
@@ -183,9 +209,23 @@ async def main():
                     print("  ✓ Overthinking防止有効")
                 if v2_info.get('collapse_prevention'):
                     print("  ✓ 崩壊防止機構有効")
+                if v2_info.get('rag_enabled'):
+                    rag_source = "Wikipedia" if v2_info.get('rag_source') == 'wikipedia' else 'Knowledge Base'
+                    print(f"  ✓ RAGによる知識拡張有効 (ソース: {rag_source})")
+
 
     except KeyboardInterrupt:
         print("\n中断されました。")
     except Exception as e:
         logger.critical(f"予期しない致命的エラー: {e}", exc_info=True)
         print(f"\n予期しない致命的なエラーが発生しました: {e}")
+
+if __name__ == "__main__":
+    # Windowsでasyncioのイベントループポリシーを設定
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    
+    # ログ設定
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    asyncio.run(main())

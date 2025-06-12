@@ -1,4 +1,8 @@
 # /llm_api/providers/enhanced_ollama_v2.py
+# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/enhanced_ollama_v2.py
+# タイトル: EnhancedOllamaProviderV2 (Final Fix)
+# 役割: RAGの指示（--wikipedia）をCogniQuantumシステムへ正しく中継する。
+
 import logging
 from typing import Any, Dict
 
@@ -9,35 +13,18 @@ from ..utils.helper_functions import get_model_family
 logger = logging.getLogger(__name__)
 
 class EnhancedOllamaProviderV2(EnhancedLLMProvider):
-    """
-    V2 Enhanced Ollama Provider
-    """
-
     def __init__(self, standard_provider: LLMProvider):
-        """
-        コンストラクタ。
-        standard_providerを受け取り、親クラスの__init__を呼び出す。
-        """
         super().__init__(standard_provider)
 
     async def standard_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
-        """
-        標準的な呼び出しを、内部の標準プロバイダーに委任する。（必須実装）
-        """
         return await self.standard_provider.standard_call(prompt, system_prompt, **kwargs)
 
     def should_use_enhancement(self, prompt: str, **kwargs) -> bool:
-        """
-        V2の拡張機能を使用すべきか判定する。（必須実装）
-        """
         return kwargs.get('force_v2', False) or kwargs.get('mode', 'simple') in [
             'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized'
         ]
 
     async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
-        """
-        論文の知見に基づき、Ollamaに対する推論プロセスを最適化する。
-        """
         try:
             mode = kwargs.get('mode', 'adaptive')
             logger.info(f"Ollama V2拡張呼び出し実行 (モード: {mode})")
@@ -47,87 +34,66 @@ class EnhancedOllamaProviderV2(EnhancedLLMProvider):
 
             cq_system = CogniQuantumSystemV2(self.standard_provider, base_model_kwargs)
             
+            use_rag = kwargs.get('use_rag', False)
+            knowledge_base_path = kwargs.get('knowledge_base_path')
+            use_wikipedia = kwargs.get('use_wikipedia', False)
+
             result = await cq_system.solve_problem(
                 prompt,
                 system_prompt=system_prompt,
-                force_regime=force_regime
+                force_regime=force_regime,
+                use_rag=use_rag,
+                knowledge_base_path=knowledge_base_path,
+                use_wikipedia=use_wikipedia
             )
 
-            # CogniQuantumSystemからのエラーをチェックして伝達する
             if not result.get('success'):
                 error_message = result.get('error', 'CogniQuantumシステムで不明なエラーが発生しました。')
                 logger.error(f"CogniQuantumシステムがエラーを返しました: {error_message}")
                 return {"text": "", "error": error_message}
+            
+            paper_based_improvements = result.get('complexity_analysis', {})
+            paper_based_improvements.update(result.get('v2_improvements', {}))
 
-            # 成功した場合、応答をフォーマットする
             return {
                 'text': result.get('final_solution', ''),
+                'image_url': result.get('image_url'),
                 'model': base_model_kwargs.get('model', 'unknown'),
                 'usage': {},
-                'error': None, # 成功時はエラーなし
+                'error': None,
                 'version': 'v2',
-                'paper_based_improvements': result.get('complexity_analysis')
+                'paper_based_improvements': paper_based_improvements
             }
 
         except Exception as e:
-            # この拡張プロバイダー自身のロジックでエラーが発生した場合
             logger.error(f"Ollama V2拡張プロバイダーで予期せぬエラー: {e}", exc_info=True)
             return {"text": "", "error": str(e)}
 
     def _determine_force_regime(self, mode: str) -> ComplexityRegime | None:
-        """モードから強制する複雑性レジームを決定する"""
-        if mode == 'efficient':
-            return ComplexityRegime.LOW
-        if mode == 'balanced':
-            return ComplexityRegime.MEDIUM
-        if mode == 'decomposed':
-            return ComplexityRegime.HIGH
-        return None # adaptive または paper_optimized
+        if mode == 'efficient': return ComplexityRegime.LOW
+        if mode == 'balanced': return ComplexityRegime.MEDIUM
+        if mode == 'decomposed': return ComplexityRegime.HIGH
+        return None
 
     def _get_optimized_params(self, model_name: str, mode: str, kwargs: Dict) -> Dict:
-        """
-        Ollamaのモデルファミリーとモードに基づいてパラメータを最適化する。
-        """
         params = kwargs.copy()
-        
-        # --modelが指定されていない場合、デフォルトの'gemma3:latest'を使用
         effective_model_name = model_name or 'gemma3:latest'
-        
         family = get_model_family(effective_model_name)
         logger.info(f"モデル '{effective_model_name}' (ファミリー: {family}) のパラメータを最適化")
 
-        # デフォルトモデル設定
-        if not params.get('model'):
-            params['model'] = effective_model_name
+        if not params.get('model'): params['model'] = effective_model_name
         
-        # 温度設定
-        temp_map = {
-            'efficient': 0.2,
-            'balanced': 0.5,
-            'decomposed': 0.4,
-        }
-        if mode in temp_map and 'temperature' not in params:
-            params['temperature'] = temp_map[mode]
+        temp_map = {'efficient': 0.2, 'balanced': 0.5, 'decomposed': 0.4}
+        if mode in temp_map and 'temperature' not in params: params['temperature'] = temp_map[mode]
 
-        # Llamaファミリー向け最適化
-        if family == 'llama':
-            if 'top_p' not in params:
-                params['top_p'] = 0.9
-        
-        # Qwenファミリー向け最適化
-        elif family == 'qwen':
-             if 'temperature' not in params:
-                params['temperature'] = temp_map.get(mode, 0.4)
+        if family == 'llama' and 'top_p' not in params: params['top_p'] = 0.9
+        elif family == 'qwen' and 'temperature' not in params: params['temperature'] = temp_map.get(mode, 0.4)
         
         return params
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
-        """このプロバイダーのケイパビリティを返す。"""
         return {
-            ProviderCapability.STANDARD_CALL: True,
-            ProviderCapability.ENHANCED_CALL: True,
-            ProviderCapability.STREAMING: True,
-            ProviderCapability.SYSTEM_PROMPT: True,
-            ProviderCapability.TOOLS: False,
-            ProviderCapability.JSON_MODE: True,
+            ProviderCapability.STANDARD_CALL: True, ProviderCapability.ENHANCED_CALL: True,
+            ProviderCapability.STREAMING: True, ProviderCapability.SYSTEM_PROMPT: True,
+            ProviderCapability.TOOLS: False, ProviderCapability.JSON_MODE: True,
         }

@@ -1,8 +1,6 @@
 # CogniQuantum Project Structure
 
 This document outlines the directory and file structure of the CogniQuantum project.
-
-
 ```
 .
 ├── .gitignore
@@ -37,6 +35,14 @@ This document outlines the directory and file structure of the CogniQuantum proj
 │   │   ├── huggingface.py
 │   │   ├── ollama.py
 │   │   └── openai.py
+│   ├── rag/
+│   │   ├── init.py
+│   │   ├── knowledge_base.py
+│   │   ├── manager.py
+│   │   └── retriever.py
+│   ├── tools/
+│   │   ├── init.py
+│   │   └── image_retrieval.py
 │   └── utils/
 │       ├── init.py
 │       ├── helper_functions.py
@@ -51,6 +57,7 @@ This document outlines the directory and file structure of the CogniQuantum proj
 ├── test_cli.py
 ├── test_cogniquantum.py
 └── test_providers.py
+
 ```
 
 ## Directory and File Overview
@@ -72,7 +79,7 @@ This directory contains all the logic for the command-line interface.
 
 - **`__init__.py`**: Allows the cli directory to be treated as a Python package.
 - **`handler.py`**: The core logic class of the CLI. It handles request processing, provider fallbacks, and generating suggestions.
-- **`main.py`**: The main entry point of the CLI application. It handles argument parsing and orchestrates the overall execution flow.
+- **`main.py`**: The main entry point of the CLI application. It handles argument parsing (including new RAG flags like `--rag` and `--wikipedia`) and orchestrates the overall execution flow.
 
 ### examples/
 
@@ -95,7 +102,7 @@ The core of the CogniQuantum V2 system, broken down by responsibility.
 - **`analyzer.py`**: Contains the `AdaptiveComplexityAnalyzer` class for analyzing prompt complexity using NLP and keyword-based methods.
 - **`engine.py`**: Contains the `EnhancedReasoningEngine` which executes different reasoning strategies (low, medium, high complexity) based on the analysis.
 - **`enums.py`**: Defines enumerations used in the system, such as `ComplexityRegime`.
-- **`system.py`**: Contains the `CogniQuantumSystemV2` class, which orchestrates the entire problem-solving process.
+- **`system.py`**: Contains the `CogniQuantumSystemV2` class, which orchestrates the entire problem-solving process, including RAG and tool use integration.
 - **`tracker.py`**: Contains data classes for tracking performance metrics and solutions, such as `ReasoningMetrics` and `SolutionTracker`.
 
 #### providers/
@@ -106,6 +113,22 @@ A collection of modules responsible for the actual communication with LLM servic
 - **`base.py`**: Defines the abstract base classes (`LLMProvider`, `EnhancedLLMProvider`) that all provider classes inherit from.
 - **`openai.py`, `claude.py`, `gemini.py`, `ollama.py`, `huggingface.py`**: Basic provider classes that call the standard APIs for each LLM service.
 - **`enhanced_*_v2.py`**: Advanced providers that integrate the functionality of the CogniQuantum system. They wrap the standard providers to execute complexity-adaptive reasoning.
+
+#### rag/
+
+This directory contains the Retrieval-Augmented Generation (RAG) functionality, responsible for fetching external knowledge to augment prompts.
+
+- **`__init__.py`**: Exposes the main `RAGManager`.
+- **`knowledge_base.py`**: Manages loading and vectorizing documents from local files and URLs into a transient vector store.
+- **`manager.py`**: The central orchestrator for RAG. It decides whether to search Wikipedia or a knowledge base, extracts optimized search queries from user prompts, and constructs the final augmented prompt.
+- **`retriever.py`**: A simple retriever class that searches the vector store created by `knowledge_base.py`.
+
+#### tools/
+
+A package for external tools that can be called by the system.
+
+- **`__init__.py`**: Initializes the tools package.
+- **`image_retrieval.py`**: A tool to search for images on the web using the SerpApi service, triggered by keywords in the user's prompt.
 
 #### utils/
 

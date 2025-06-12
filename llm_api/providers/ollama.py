@@ -1,4 +1,8 @@
 # /llm_api/providers/ollama.py
+# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/ollama.py
+# タイトル: OllamaProvider with extended timeout
+# 役割: Ollamaと対話するための標準プロバイダー。RAGのような長時間処理に対応するため、デフォルトのタイムアウト値を延長する。
+
 import logging
 from typing import Any, Dict, List
 
@@ -11,12 +15,13 @@ class OllamaProvider(LLMProvider):
     """
     Ollamaと対話するための標準プロバイダー
     """
-    def __init__(self, api_base_url: str = None, model: str = None, timeout: float = 120.0):
+    # RAGのような長時間処理に対応するため、デフォルトのタイムアウトを延長
+    def __init__(self, api_base_url: str = None, model: str = None, timeout: float = 600.0):
         self.api_base_url = api_base_url or "http://localhost:11434"
         self.model = model or "gemma3:latest" # デフォルトモデルを変更
         self.timeout = timeout
         super().__init__()
-        logger.info(f"Ollama provider initialized with API URL: {self.api_base_url}")
+        logger.info(f"Ollama provider initialized with API URL: {self.api_base_url} and timeout: {self.timeout}s")
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
         """このプロバイダーのケイパビリティを返す。"""

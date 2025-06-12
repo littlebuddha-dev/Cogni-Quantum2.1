@@ -1,4 +1,8 @@
 # /llm_api/providers/enhanced_openai_v2.py
+# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/enhanced_openai_v2.py
+# タイトル: EnhancedOpenAIProviderV2 (Final Fix)
+# 役割: RAGの指示（--wikipedia）をCogniQuantumシステムへ正しく中継する。
+
 import logging
 from typing import Any, Dict
 
@@ -8,8 +12,6 @@ from ..cogniquantum import CogniQuantumSystemV2, ComplexityRegime
 logger = logging.getLogger(__name__)
 
 class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
-    """V2 Enhanced OpenAI Provider"""
-
     async def standard_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
         return await self.standard_provider.standard_call(prompt, system_prompt, **kwargs)
 
@@ -28,24 +30,35 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
             
             cq_system = CogniQuantumSystemV2(self.standard_provider, base_model_kwargs)
             
+            use_rag = kwargs.get('use_rag', False)
+            knowledge_base_path = kwargs.get('knowledge_base_path')
+            use_wikipedia = kwargs.get('use_wikipedia', False)
+            
             result = await cq_system.solve_problem(
                 prompt,
                 system_prompt=system_prompt,
-                force_regime=force_regime
+                force_regime=force_regime,
+                use_rag=use_rag,
+                knowledge_base_path=knowledge_base_path,
+                use_wikipedia=use_wikipedia
             )
             
             if not result.get('success'):
                 error_message = result.get('error', 'CogniQuantumシステム(OpenAI)で不明なエラーが発生しました。')
                 logger.error(f"CogniQuantumシステムがエラーを返しました: {error_message}")
                 return {"text": "", "error": error_message}
+
+            paper_based_improvements = result.get('complexity_analysis', {})
+            paper_based_improvements.update(result.get('v2_improvements', {}))
             
             return {
                 'text': result.get('final_solution', ''),
+                'image_url': result.get('image_url'),
                 'model': base_model_kwargs.get('model', 'gpt-4o'),
                 'usage': {},
                 'error': None,
                 'version': 'v2',
-                'paper_based_improvements': result.get('complexity_analysis')
+                'paper_based_improvements': paper_based_improvements
             }
         except Exception as e:
             logger.error(f"OpenAI V2拡張プロバイダーでエラー: {e}", exc_info=True)
@@ -59,16 +72,12 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
 
     def _get_optimized_params(self, mode: str, kwargs: Dict) -> Dict:
         params = kwargs.copy()
-        if 'model' not in params:
-            params['model'] = 'gpt-4o'
+        if 'model' not in params: params['model'] = 'gpt-4o'
         return params
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
         return {
-            ProviderCapability.STANDARD_CALL: True,
-            ProviderCapability.ENHANCED_CALL: True,
-            ProviderCapability.STREAMING: True,
-            ProviderCapability.SYSTEM_PROMPT: True,
-            ProviderCapability.TOOLS: True,
-            ProviderCapability.JSON_MODE: True,
+            ProviderCapability.STANDARD_CALL: True, ProviderCapability.ENHANCED_CALL: True,
+            ProviderCapability.STREAMING: True, ProviderCapability.SYSTEM_PROMPT: True,
+            ProviderCapability.TOOLS: True, ProviderCapability.JSON_MODE: True,
         }

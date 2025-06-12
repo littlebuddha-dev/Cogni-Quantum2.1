@@ -1,13 +1,29 @@
+# /requirements.txt
+# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/requirements.txt
+# タイトル: requirements.txt with RAG dependencies
+# 役割: プロジェクトに必要なライブラリを定義する。RAG関連の依存関係を修正・追加。
+
 # CogniQuantum V2 Dependencies
 
 # Core Dependencies
 aiohttp>=3.8.0
 python-dotenv>=1.0.0
-numpy>=1.21.0,<2.0
+numpy<2.0
 httpx>=0.24.0
 
 # Audio Processing (Optional)
 openai-whisper>=20231117
+
+# RAG Dependencies (New)
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0  # or faiss-gpu for GPU support
+pypdf>=3.0.0     # For PDF document loading
+langchain>=0.1.0
+langchain-community>=0.0.20 # For document loaders, etc.
+langchain-huggingface>=0.0.3 # For new HuggingFaceEmbeddings
+beautifulsoup4>=4.9.0      # For HTML parsing
+wikipedia>=1.4.0          # For Wikipedia search
+google-search-results>=2.4.2 # For Image Search
 
 # Development Dependencies (Optional)
 pytest>=7.0.0
