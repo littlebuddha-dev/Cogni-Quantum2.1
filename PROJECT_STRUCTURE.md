@@ -15,6 +15,7 @@ This document outlines the directory and file structure of the CogniQuantum proj
 ├── installation_guide.md
 ├── llm_api/
 │   ├── init.py
+│   ├── config.py
 │   ├── cogniquantum/
 │   │   ├── init.py
 │   │   ├── analyzer.py

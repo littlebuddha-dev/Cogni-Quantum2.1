@@ -1,13 +1,13 @@
 # /llm_api/providers/ollama.py
-# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/ollama.py
-# タイトル: OllamaProvider with extended timeout
-# 役割: Ollamaと対話するための標準プロバイダー。RAGのような長時間処理に対応するため、デフォルトのタイムアウト値を延長する。
+# タイトル: OllamaProvider with Centralized Settings
+# 役割: Ollamaと対話するための標準プロバイダー。設定値をconfigモジュールから正しく取得する。
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import httpx
 from .base import LLMProvider, ProviderCapability
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +15,19 @@ class OllamaProvider(LLMProvider):
     """
     Ollamaと対話するための標準プロバイダー
     """
-    # RAGのような長時間処理に対応するため、デフォルトのタイムアウトを延長
-    def __init__(self, api_base_url: str = None, model: str = None, timeout: float = 600.0):
-        self.api_base_url = api_base_url or "http://localhost:11434"
-        self.model = model or "gemma3:latest" # デフォルトモデルを変更
-        self.timeout = timeout
+    def __init__(self):
+        self.api_base_url = settings.OLLAMA_API_BASE_URL
+        self.default_model = settings.OLLAMA_DEFAULT_MODEL # ★★★ 修正箇所 ★★★
+        self.timeout = settings.OLLAMA_TIMEOUT
         super().__init__()
-        logger.info(f"Ollama provider initialized with API URL: {self.api_base_url} and timeout: {self.timeout}s")
+        logger.info(f"Ollama provider initialized with API URL: {self.api_base_url} and default model: {self.default_model}")
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
         """このプロバイダーのケイパビリティを返す。"""
         return {
             ProviderCapability.STANDARD_CALL: True,
-            ProviderCapability.ENHANCED_CALL: False, # 標準プロバイダーなのでFalse
-            ProviderCapability.STREAMING: False, # ストリーミングは未実装
+            ProviderCapability.ENHANCED_CALL: False,
+            ProviderCapability.STREAMING: False,
             ProviderCapability.SYSTEM_PROMPT: True,
             ProviderCapability.TOOLS: False,
             ProviderCapability.JSON_MODE: True,
@@ -39,7 +38,8 @@ class OllamaProvider(LLMProvider):
         Ollama APIを呼び出し、標準化された辞書形式で結果を返す。
         """
         api_url = f"{self.api_base_url}/api/chat"
-        model = kwargs.get("model", self.model)
+        # ★★★ 修正箇所 ★★★
+        model = kwargs.get("model", self.default_model)
         
         messages = []
         if system_prompt:
@@ -49,9 +49,8 @@ class OllamaProvider(LLMProvider):
         payload = {
             "model": model,
             "messages": messages,
-            "stream": False, # 非ストリーミングモード
+            "stream": False,
         }
-        # オプションのパラメータをペイロードに追加
         for key in ['temperature', 'top_p', 'top_k']:
             if key in kwargs:
                 payload[key] = kwargs[key]
@@ -62,10 +61,8 @@ class OllamaProvider(LLMProvider):
                 response.raise_for_status()
                 response_data = response.json()
 
-            # 非ストリーミング応答からコンテンツを抽出
             full_response = response_data.get('message', {}).get('content', '')
             
-            # 標準化された辞書を返す
             return {
                 "text": full_response,
                 "model": model,
@@ -76,7 +73,6 @@ class OllamaProvider(LLMProvider):
                 },
                 "error": None
             }
-
         except httpx.HTTPStatusError as e:
             error_msg = f"Ollama API HTTPエラー: {e.response.status_code} - {e.response.text}"
             logger.error(error_msg)

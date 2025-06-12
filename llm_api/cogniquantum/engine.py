@@ -1,6 +1,6 @@
 # /llm_api/cogniquantum/engine.py
-# タイトル: Enhanced Reasoning Engine
-# 役割: 論文の発見に基づく改良推論エンジン。外部からアナライザーを受け取れるように修正。
+# タイトル: Enhanced Reasoning Engine with Configurable Concurrency
+# 役割: 高複雑性モードでサブ問題を解決する際の同時実行数を、configファイルから読み込むように修正。
 
 import logging
 import json
@@ -11,16 +11,15 @@ from typing import Any, Dict, List, Optional
 from .analyzer import AdaptiveComplexityAnalyzer
 from .enums import ComplexityRegime
 from ..providers.base import LLMProvider
+from ..config import settings # ★★★ 追加箇所 ★★★
 
 logger = logging.getLogger(__name__)
 
 class EnhancedReasoningEngine:
-    """論文の発見に基づく改良推論エンジン"""
-    
+    # ... (init, execute_reasoning, low/medium complexity methodsは変更なし) ...
     def __init__(self, provider: LLMProvider, base_model_kwargs: Dict[str, Any], complexity_analyzer: Optional[AdaptiveComplexityAnalyzer] = None):
         self.provider = provider
         self.base_model_kwargs = base_model_kwargs
-        # 外部からアナライザーが渡されなければ、自身で作成する
         self.complexity_analyzer = complexity_analyzer or AdaptiveComplexityAnalyzer()
         
     async def execute_reasoning(
@@ -34,7 +33,6 @@ class EnhancedReasoningEngine:
         
         if complexity_score is None or regime is None:
             if regime is None:
-                # 自身が持つアナライザーを使用
                 complexity_score, regime = self.complexity_analyzer.analyze_complexity(prompt)
         
         logger.info(f"推論実行開始: 体制={regime.value}, 複雑性={complexity_score or 'N/A'}")
@@ -43,10 +41,9 @@ class EnhancedReasoningEngine:
             return await self._execute_low_complexity_reasoning(prompt, system_prompt)
         elif regime == ComplexityRegime.MEDIUM:
             return await self._execute_medium_complexity_reasoning(prompt, system_prompt)
-        else:  # HIGH
+        else:
             return await self._execute_high_complexity_reasoning(prompt, system_prompt)
 
-    # ... その他のメソッドは変更なし ...
     async def _execute_low_complexity_reasoning(
         self, 
         prompt: str, 
@@ -132,8 +129,8 @@ class EnhancedReasoningEngine:
             'error': None,
             'complexity_regime': ComplexityRegime.HIGH.value,
             'reasoning_approach': 'decomposition_parallel_solve_integration',
-            'decomposition_results': sub_problems,
-            'staged_solutions': staged_solutions,
+            'decomposition': sub_problems,
+            'sub_solutions': staged_solutions,
             'collapse_prevention': True
         }
     
@@ -178,18 +175,25 @@ class EnhancedReasoningEngine:
         except (json.JSONDecodeError, Exception) as e:
             logger.error(f"問題の分解結果の解析中にエラー: {e}")
             return []
-    
+
     async def _solve_decomposed_problems(
         self, 
         sub_problems: List[str], 
         original_prompt: str, 
         system_prompt: str
     ) -> List[Dict]:
-        """分解されたサブ問題を並列で解決する"""
+        """分解されたサブ問題を並列で解決する（同時実行数制限付き）"""
         logger.info(f"{len(sub_problems)}個のサブ問題を並列解決します。")
+        
+        # ★★★ 変更箇所 ★★★
+        # configから同時実行数を読み込む（安全のためデフォルトは2に設定）
+        concurrency_limit = settings.OLLAMA_CONCURRENCY_LIMIT
+        semaphore = asyncio.Semaphore(concurrency_limit)
+        logger.info(f"同時リクエスト数を{concurrency_limit}に制限します。")
 
         async def solve_task(sub_problem: str, index: int) -> Dict:
-            staged_prompt = f"""以下の背景情報と元の問題を踏まえ、指定された「サブ問題」を解決してください。
+            async with semaphore:
+                staged_prompt = f"""以下の背景情報と元の問題を踏まえ、指定された「サブ問題」を解決してください。
 これは大きな問題の一部です。このサブ問題に集中して、詳細かつ具体的な解決策を提示してください。
 
 # 背景
@@ -198,10 +202,10 @@ class EnhancedReasoningEngine:
 # 解決すべきサブ問題
 {sub_problem}
 """
-            logger.debug(f"サブ問題 {index+1} の解決を開始...")
-            response = await self.provider.call(staged_prompt, system_prompt, **self.base_model_kwargs)
-            logger.debug(f"サブ問題 {index+1} の解決が完了。")
-            return {'sub_problem': sub_problem, 'solution': response.get('text', ''), 'error': response.get('error')}
+                logger.debug(f"サブ問題 {index+1}/{len(sub_problems)} の解決を開始...")
+                response = await self.provider.call(staged_prompt, system_prompt, **self.base_model_kwargs)
+                logger.debug(f"サブ問題 {index+1}/{len(sub_problems)} の解決が完了。")
+                return {'sub_problem': sub_problem, 'solution': response.get('text', ''), 'error': response.get('error')}
 
         tasks = [solve_task(sp, i) for i, sp in enumerate(sub_problems)]
         solved_parts = await asyncio.gather(*tasks)
@@ -216,9 +220,15 @@ class EnhancedReasoningEngine:
         """段階的解決策を統合し、一貫性のある最終解を生成する"""
         if not staged_solutions: return ""
 
+        # タイムアウト等で失敗したサブ問題を除外して統合
+        valid_solutions = [s for s in staged_solutions if not s.get('error') and s.get('solution')]
+        if not valid_solutions:
+             logger.error("全てのサブ問題の解決に失敗したため、統合できません。")
+             return {"error": "All sub-problems failed to be solved."}
+
         context = "\n\n".join(
             f"### サブ問題: {s['sub_problem']}\n解決策: {s['solution']}"
-            for s in staged_solutions if not s.get('error') and s.get('solution')
+            for s in valid_solutions
         )
         integration_prompt = f"""以下の「元の問題」と、それに関連する複数の「サブ問題の解決策」を統合し、一貫性のある包括的な最終解答を作成してください。
 

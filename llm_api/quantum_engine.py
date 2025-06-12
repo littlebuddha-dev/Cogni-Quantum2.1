@@ -1,12 +1,13 @@
-# /llm_api/cogniquantum/quantum_engine.py
-# タイトル: Quantum-Inspired Reasoning Engine
-# 役割: 量子インスパイアード推論の原理（重ね合わせ、収縮）を実装する。
+# /llm_api/quantum_engine.py
+# タイトル: Quantum-Inspired Reasoning Engine with Corrected Paths
+# 役割: 量子インスパイアード推論の原理を実装する。インポートパスとファイルの場所を示すコメントを修正。
 
 import asyncio
 import logging
 from typing import Any, Dict, List
 
-from ..providers.base import LLMProvider
+# 修正箇所: カレントパッケージ(llm_api)からインポートするように変更
+from .providers.base import LLMProvider
 
 logger = logging.getLogger(__name__)
 

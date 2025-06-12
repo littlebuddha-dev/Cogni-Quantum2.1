@@ -1,6 +1,6 @@
 # /llm_api/cogniquantum/analyzer.py
-# タイトル: Multi-Language and Edge-Aware Complexity Analyzer
-# 役割: Edgeモードを検知し、NLP分析をバイパスしてリソースを節約する。
+# タイトル: Multi-Language and Edge-Aware Complexity Analyzer (Corrected)
+# 役割: 複雑性分析ロジックを修正し、日本語のような非スペース区切り言語でもNLP分析が正しくトリガーされるようにする。
 
 import logging
 import spacy
@@ -19,7 +19,6 @@ class AdaptiveComplexityAnalyzer:
     Edgeモードに対応し、リソース消費を抑制する。
     """
     def __init__(self, learner: Optional[ComplexityLearner] = None):
-        # ... (変更なし)
         self.learner = learner
         self.nlp_models: Dict[str, Any] = {}
         self.keyword_sets = {
@@ -52,13 +51,10 @@ class AdaptiveComplexityAnalyzer:
         """
         多言語とEdgeモードに対応した複雑性分析。
         """
-        # --- Edgeモード特別処理 ---
         if mode == 'edge':
             logger.info("エッジモードのため、軽量なキーワード分析を実行し、低複雑性レジームに固定します。")
-            # 最も効率的なLOWレジームを即座に返す
             return 10.0, ComplexityRegime.LOW
 
-        # 1. 学習データから提案を取得
         if self.learner:
             suggestion = self.learner.get_suggestion(prompt)
             if suggestion:
@@ -67,19 +63,22 @@ class AdaptiveComplexityAnalyzer:
                 if suggestion == ComplexityRegime.MEDIUM: return 50.0, suggestion
                 if suggestion == ComplexityRegime.HIGH: return 85.0, suggestion
 
-        # ... (以降の処理は変更なし)
-        # 2. 言語を検出
         lang = self._detect_language(prompt)
         
-        # 3. 高度なNLP分析を試行
         nlp = self._get_spacy_model(lang)
-        if nlp and len(prompt.split()) > 10:
-            logger.info(f"'{lang}'言語のNLPベース高度分析を実行します。")
+        
+        # len(prompt.split()) > 10 では日本語の単語数を正しく判定できないため、
+        # トークン化後の長さで判定するように修正。
+        if nlp:
             doc = nlp(prompt)
-            complexity_score = self._nlp_enhanced_analysis(doc)
+            if len(doc) > 5: # トークン数が5より大きい場合にNLP分析を実行
+                logger.info(f"'{lang}'言語のNLPベース高度分析を実行します。")
+                complexity_score = self._nlp_enhanced_analysis(doc)
+            else:
+                logger.info(f"プロンプトが短いため、'{lang}'言語のキーワードベース分析を実行します。")
+                complexity_score = self._keyword_based_analysis(prompt, lang)
         else:
-            # 4. NLPが利用できない場合、キーワードベース分析にフォールバック
-            logger.info(f"'{lang}'言語のキーワードベース分析を実行します。")
+            logger.info(f"NLPモデルが利用できないため、'{lang}'言語のキーワードベース分析を実行します。")
             complexity_score = self._keyword_based_analysis(prompt, lang)
         
         logger.info(f"算出された複雑性スコア: {complexity_score:.2f}")
@@ -94,11 +93,9 @@ class AdaptiveComplexityAnalyzer:
         logger.info(f"決定された複雑性レジーム: {regime.value}")
         return complexity_score, regime
 
-    # ... (_detect_language, _get_spacy_model, _keyword_based_analysis, _nlp_enhanced_analysis は変更なし)
     def _detect_language(self, text: str) -> str:
         """プロンプトの言語を検出する。"""
         try:
-            # プロンプトが短いと誤判定しやすいため、ある程度の長さがある場合のみ検出
             if len(text) > 20:
                 lang = detect(text)
                 logger.info(f"検出された言語: {lang}")
@@ -128,14 +125,14 @@ class AdaptiveComplexityAnalyzer:
             
             nlp = spacy.load(model_name)
             logger.info(f"spaCyモデル '{model_name}' のロードに成功しました。")
-            self.nlp_models[lang] = nlp # 成功したらキャッシュ
+            self.nlp_models[lang] = nlp
             return nlp
         except (ImportError, OSError, SystemExit) as e:
             logger.error(
                 f"spaCyモデル '{model_name}' のロードまたはダウンロードに失敗しました: {e}\n"
                 f"高度な分析を有効にするには、手動でインストールしてください: python -m spacy download {model_name}"
             )
-            self.nlp_models[lang] = None # 失敗もキャッシュして再試行を防ぐ
+            self.nlp_models[lang] = None
             return None
 
     def _keyword_based_analysis(self, prompt: str, lang: str) -> float:
@@ -168,7 +165,6 @@ class AdaptiveComplexityAnalyzer:
         """
         言語に依存しない、spaCyのDocオブジェクトを使用した高度な複雑性分析。
         """
-        # Syntactic Complexity (構文の複雑さ)
         sentences = list(doc.sents)
         num_sentences = len(sentences)
         if num_sentences == 0: return 5.0
@@ -177,7 +173,6 @@ class AdaptiveComplexityAnalyzer:
         syntactic_score = (num_sentences * 1.5) + (avg_sent_length * 0.5) + (num_noun_chunks * 1.0)
         normalized_syntactic = min(syntactic_score / 40.0, 1.0) * 100
 
-        # Lexical Richness (語彙の豊富さ)
         num_entities = len(doc.ents)
         unique_entity_labels = len(set(ent.label_ for ent in doc.ents))
         entity_score = (num_entities * 2.0) + (unique_entity_labels * 3.0)
@@ -186,7 +181,6 @@ class AdaptiveComplexityAnalyzer:
         lexical_score = entity_score + lexical_diversity_score
         normalized_lexical = min(lexical_score / 50.0, 1.0) * 100
 
-        # Cognitive Task Demand (認知的タスクの要求度)
         cognitive_keywords = {'compare', 'contrast', 'analyze', 'evaluate', 'synthesize', 'create', 'argue', 'derive', 'prove', '比較', '対比', '分析', '評価', '統合', '創造', '議論', '導出', '証明'}
         cognitive_lemmas = {token.lemma_.lower() for token in doc if token.pos_ == 'VERB'}
         cognitive_demand_score = len(cognitive_keywords.intersection(cognitive_lemmas)) * 10

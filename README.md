@@ -507,16 +507,6 @@ This is an independent research implementation based on the publicly available A
 - **Open Source AI Community** for continuous innovation
 
 ---
-
-## 🚀 **Future Roadmap**
-
-# (抜粋)
-...
-### **V3.0 (Implemented)**
-- [x] **Quantum-inspired reasoning implementation**: A new `quantum_inspired` mode uses superposition and collapse principles to synthesize novel insights.
-- [x] **Self-improving complexity analysis**: The system now learns from its past performance to refine future complexity assessments, saving results to `complexity_learnings.json`.
-- [x] **Multi-language complexity detection**: Automatically detects prompt language (e.g., English, Japanese) and uses the appropriate analysis models and keywords.
-- [x] **Edge device optimization**: A new `--mode edge` provides a lightweight, low-resource configuration that disables heavy processing for speed and efficiency.
 ...
 ### **Mode Quick Reference**
 - ...

@@ -1,10 +1,10 @@
 # /llm_api/providers/gemini.py
 import logging
-import os
 from typing import Any, Dict
 
 import google.generativeai as genai
 from .base import LLMProvider, ProviderCapability
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +12,13 @@ class GeminiProvider(LLMProvider):
     """
     Google Gemini APIと対話するための標準プロバイダー
     """
-    def __init__(self, model: str = None):
-        api_key = os.getenv("GEMINI_API_KEY")
+    def __init__(self):
+        api_key = settings.GEMINI_API_KEY
         if not api_key:
-            raise ValueError("GEMINI_API_KEY環境変数が設定されていません。")
+            raise ValueError("GEMINI_API_KEYが設定されていません。")
         genai.configure(api_key=api_key)
-        self.model_name = model or "gemini-1.5-flash"
-        self.model = genai.GenerativeModel(self.model_name)
+        self.default_model = settings.GEMINI_DEFAULT_MODEL
+        # モデルの初期化は呼び出し時に行うことで、モデル名の動的変更に対応
         super().__init__()
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
@@ -38,22 +38,17 @@ class GeminiProvider(LLMProvider):
 
     async def standard_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
         """Gemini APIを呼び出し、標準化された辞書形式で結果を返す。"""
+        model_name = kwargs.get("model", self.default_model)
         try:
-            # system_promptはgeneration_configの一部として渡すのが一般的
-            config = {}
-            if system_prompt:
-                # Geminiではsystem_instructionとして渡す
-                # ただし、モデルによってはサポートが異なる
-                # ここでは簡易的にプロンプトに含める
-                full_prompt = f"{system_prompt}\n\n{prompt}"
-            else:
-                full_prompt = prompt
+            model = genai.GenerativeModel(model_name)
+            
+            full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
 
-            response = await self.model.generate_content_async(full_prompt)
+            response = await model.generate_content_async(full_prompt)
             
             return {
                 "text": response.text.strip(),
-                "model": self.model_name,
+                "model": model_name,
                 "usage": {}, # Gemini APIは現在、トークン使用量を直接返さない
                 "error": None,
             }

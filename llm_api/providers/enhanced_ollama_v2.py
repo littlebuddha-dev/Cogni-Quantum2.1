@@ -1,20 +1,16 @@
 # /llm_api/providers/enhanced_ollama_v2.py
-# タイトル: EnhancedOllamaProviderV2 with Edge Mode Optimization
-# 役割: 'edge'モード時に軽量モデルを自動選択するなど、エッジデバイス向け最適化を行う。
+# タイトル: Refactored EnhancedOllamaProviderV2 with Corrected Default Model
+# 役割: OllamaプロバイダーにCogniQuantum V2の機能を提供する。デフォルトモデルをユーザー環境に合わせて修正。
 
 import logging
 from typing import Any, Dict
 
-from .base import EnhancedLLMProvider, ProviderCapability, LLMProvider
-from ..cogniquantum import CogniQuantumSystemV2, ComplexityRegime
+from .base import EnhancedLLMProvider, ProviderCapability
 from ..utils.helper_functions import get_model_family
 
 logger = logging.getLogger(__name__)
 
 class EnhancedOllamaProviderV2(EnhancedLLMProvider):
-    def __init__(self, standard_provider: LLMProvider):
-        super().__init__(standard_provider)
-
     async def standard_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
         return await self.standard_provider.standard_call(prompt, system_prompt, **kwargs)
 
@@ -24,86 +20,36 @@ class EnhancedOllamaProviderV2(EnhancedLLMProvider):
             'quantum_inspired', 'edge'
         ]
 
-    async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
-        try:
-            mode = kwargs.get('mode', 'adaptive')
-            logger.info(f"Ollama V2拡張呼び出し実行 (モード: {mode})")
-            
-            force_regime = self._determine_force_regime(mode)
-            base_model_kwargs = self._get_optimized_params(kwargs.get('model'), mode, kwargs)
-
-            cq_system = CogniQuantumSystemV2(self.standard_provider, base_model_kwargs)
-            
-            use_rag = kwargs.get('use_rag', False)
-            knowledge_base_path = kwargs.get('knowledge_base_path')
-            use_wikipedia = kwargs.get('use_wikipedia', False)
-            real_time_adjustment = kwargs.get('real_time_adjustment', True)
-
-            result = await cq_system.solve_problem(
-                prompt,
-                system_prompt=system_prompt,
-                force_regime=force_regime,
-                use_rag=use_rag,
-                knowledge_base_path=knowledge_base_path,
-                use_wikipedia=use_wikipedia,
-                real_time_adjustment=real_time_adjustment,
-                mode=mode
-            )
-
-            if not result.get('success'):
-                error_message = result.get('error', 'CogniQuantumシステムで不明なエラーが発生しました。')
-                logger.error(f"CogniQuantumシステムがエラーを返しました: {error_message}")
-                return {"text": "", "error": error_message}
-            
-            paper_based_improvements = result.get('complexity_analysis', {})
-            paper_based_improvements.update(result.get('v2_improvements', {}))
-
-            return {
-                'text': result.get('final_solution', ''),
-                'image_url': result.get('image_url'),
-                'model': base_model_kwargs.get('model', 'unknown'),
-                'usage': {},
-                'error': None,
-                'version': 'v2',
-                'paper_based_improvements': paper_based_improvements
-            }
-
-        except Exception as e:
-            logger.error(f"Ollama V2拡張プロバイダーで予期せぬエラー: {e}", exc_info=True)
-            return {"text": "", "error": str(e)}
-
-    def _determine_force_regime(self, mode: str) -> ComplexityRegime | None:
-        if mode in ['efficient', 'edge']: return ComplexityRegime.LOW
-        if mode == 'balanced': return ComplexityRegime.MEDIUM
-        if mode == 'decomposed': return ComplexityRegime.HIGH
-        return None
-
-    def _get_optimized_params(self, model_name: str, mode: str, kwargs: Dict) -> Dict:
+    def _get_optimized_params(self, mode: str, kwargs: Dict) -> Dict:
+        """Ollamaに最適化されたモデルパラメータを返す。"""
         params = kwargs.copy()
-        
+        model_name = kwargs.get('model')
+
         if mode == 'edge' and not model_name:
-            # Edgeモードでモデル指定がない場合、軽量なgemma:2bをデフォルトにする
             effective_model_name = 'gemma:2b'
             logger.info(f"エッジモードのため、デフォルトの軽量モデル '{effective_model_name}' を選択しました。")
         else:
-            effective_model_name = model_name or 'gemma:latest'
+            # ユーザー環境に存在する可能性が高い gemma3:latest をデフォルトにする
+            effective_model_name = model_name or 'gemma3:latest'
 
         family = get_model_family(effective_model_name)
         logger.info(f"モデル '{effective_model_name}' (ファミリー: {family}) のパラメータを最適化中")
 
-        if not params.get('model'): params['model'] = effective_model_name
-        
-        temp_map = {'efficient': 0.2, 'balanced': 0.5, 'decomposed': 0.4, 'edge': 0.3}
-        if mode in temp_map and 'temperature' not in params: params['temperature'] = temp_map[mode]
+        if 'model' not in params:
+            params['model'] = effective_model_name
 
-        if family == 'llama' and 'top_p' not in params: params['top_p'] = 0.9
-        elif family == 'qwen' and 'temperature' not in params: params['temperature'] = temp_map.get(mode, 0.4)
-        
+        temp_map = {'efficient': 0.2, 'balanced': 0.5, 'decomposed': 0.4, 'edge': 0.3}
+        if mode in temp_map and 'temperature' not in params:
+            params['temperature'] = temp_map[mode]
+
+        if family == 'llama' and 'top_p' not in params:
+            params['top_p'] = 0.9
+        elif family == 'qwen' and 'temperature' not in params:
+            params['temperature'] = temp_map.get(mode, 0.4)
+
         return params
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
-        return {
-            ProviderCapability.STANDARD_CALL: True, ProviderCapability.ENHANCED_CALL: True,
-            ProviderCapability.STREAMING: True, ProviderCapability.SYSTEM_PROMPT: True,
-            ProviderCapability.TOOLS: False, ProviderCapability.JSON_MODE: True,
-        }
+        capabilities = self.standard_provider.get_capabilities()
+        capabilities[ProviderCapability.ENHANCED_CALL] = True
+        return capabilities

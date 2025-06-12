@@ -1,6 +1,6 @@
 # /cli/main.py
-# タイトル: CLI main entrypoint with Edge Mode
-# 役割: CLIのエントリーポイントと引数解析。'edge'モードを追加。
+# タイトル: CLI main entrypoint with Corrected Argument Passing
+# 役割: CLIのエントリーポイントと引数解析。関数呼び出し時の引数の重複を解消する。
 
 import argparse
 import asyncio
@@ -12,11 +12,11 @@ import sys
 from dotenv import load_dotenv
 load_dotenv()
 
-# プロジェクトルートをパスに追加
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+from llm_api.config import settings
 from cli.handler import CogniQuantumCLIV2Fixed
 from llm_api.providers import list_providers, list_enhanced_providers
 from llm_api.utils.helper_functions import format_json_output, read_from_pipe_or_file
@@ -25,57 +25,43 @@ logger = logging.getLogger(__name__)
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="CogniQuantum V2統合LLM CLI（修正版）",
+        description="CogniQuantum V2統合LLM CLI（設定管理改善版）",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
     parser.add_argument("provider", nargs='?', help="使用するLLMプロバイダー")
     parser.add_argument("prompt", nargs='?', default=None, help="LLMへのプロンプト")
     
-    # V2専用モードを含む選択肢
     mode_choices = [
         'simple', 'chat', 'reasoning', 'creative-fusion', 'self-correct',
         'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel',
         'quantum_inspired', 'edge'
     ]
-    parser.add_argument("--mode", default="simple", choices=mode_choices, help="実行モード")
+    parser.add_argument("--mode", default=settings.V2_DEFAULT_MODE, choices=mode_choices, help="実行モード")
     
-    # (以降のコードは変更なし)
-    # ...
-    # 基本オプション
-    parser.add_argument("--model", help="使用するモデル名")
+    parser.add_argument("--model", help="使用するモデル名（デフォルトはプロバイダー毎に設定）")
     parser.add_argument("-f", "--file", help="ファイルからプロンプトを読み込み")
     parser.add_argument("--system-prompt", help="システムプロンプト")
     parser.add_argument("--temperature", type=float, help="生成の多様性")
     parser.add_argument("--max-tokens", type=int, help="最大トークン数")
     parser.add_argument("--json", action="store_true", help="JSON出力")
     
-    # 診断・管理オプション
     parser.add_argument("--list-providers", action="store_true", help="プロバイダー一覧表示")
     parser.add_argument("--system-status", action="store_true", help="システム状態表示")
     parser.add_argument("--health-check", action="store_true", help="健全性チェック実行")
     parser.add_argument("--troubleshooting", action="store_true", help="トラブルシューティングガイド")
     
-    # V2専用オプション
     v2_group = parser.add_argument_group('V2 Options')
     v2_group.add_argument("--force-v2", action="store_true", help="V2機能強制使用")
     v2_group.add_argument("--no-fallback", action="store_true", help="フォールバック無効")
     v2_group.add_argument("--no-real-time-adjustment", dest="real_time_adjustment", action="store_false", help="リアルタイム複雑性調整を無効化")
 
-    # RAGオプション
     rag_group = parser.add_argument_group('RAG Options')
     rag_group.add_argument("--rag", dest="use_rag", action="store_true", help="RAG機能を有効化")
-    rag_group.add_argument("--knowledge-base", dest="knowledge_base_path", help="RAGが使用するナレッジベースのファイルパスまたはURL")
-    rag_group.add_argument("--wikipedia", dest="use_wikipedia", action="store_true", help="RAG機能でWikipediaを知識源として使用")
+    rag_group.add_argument("--knowledge-base", dest="knowledge_base_path", help="RAGが使用するナレッジベースのパス")
+    rag_group.add_argument("--wikipedia", dest="use_wikipedia", action="store_true", help="RAGでWikipediaを使用")
 
     args = parser.parse_args()
-
-    if args.use_rag and args.use_wikipedia and args.knowledge_base_path:
-        parser.error("--knowledge-base と --wikipedia は同時に使用できません。")
-    if args.use_rag and not (args.use_wikipedia or args.knowledge_base_path):
-        parser.error("--rag を使用するには --knowledge-base または --wikipedia の指定が必要です。")
-    if (args.use_wikipedia or args.knowledge_base_path) and not args.use_rag:
-         parser.error("--knowledge-base または --wikipedia を使用するには --rag の指定も必要です。")
 
     cli = CogniQuantumCLIV2Fixed()
 
@@ -100,16 +86,21 @@ async def main():
     is_available = True
     if args.provider == 'ollama':
         ollama_health = await cli._check_ollama_models()
-        if not ollama_health.get('server_available') or not ollama_health.get('models_loaded'):
+        if not ollama_health.get('server_available'):
             is_available = False
     else:
-        key_map = {'openai': 'OPENAI_API_KEY', 'claude': 'CLAUDE_API_KEY', 'gemini': 'GEMINI_API_KEY', 'huggingface': 'HF_TOKEN'}
-        env_var = key_map.get(args.provider)
-        if env_var and not os.getenv(env_var):
+        key_map = {
+            'openai': settings.OPENAI_API_KEY, 
+            'claude': settings.CLAUDE_API_KEY, 
+            'gemini': settings.GEMINI_API_KEY, 
+            'huggingface': settings.HF_TOKEN
+        }
+        if args.provider in key_map and not key_map.get(args.provider):
+            print(f"警告: プロバイダー '{args.provider}' のAPIキーが設定されていません。")
             is_available = False
     
     if not is_available:
-        print("就寝中です・・・")
+        print("プロバイダーが利用できないため、処理を中断します。")
         return
 
     if args.health_check:
@@ -125,20 +116,13 @@ async def main():
     if not prompt:
         parser.error("プロンプトが指定されていません。")
 
-    kwargs = {
-        'mode': args.mode,
-        'system_prompt': args.system_prompt or "",
-        'force_v2': args.force_v2,
-        'no_fallback': args.no_fallback,
-        'use_rag': args.use_rag, 
-        'knowledge_base_path': args.knowledge_base_path,
-        'use_wikipedia': args.use_wikipedia,
-        'real_time_adjustment': args.real_time_adjustment,
-    }
+    # kwargsを構築
+    kwargs = {k: v for k, v in vars(args).items() if v is not None}
     
-    if args.model: kwargs['model'] = args.model
-    if args.temperature is not None: kwargs['temperature'] = args.temperature
-    if args.max_tokens is not None: kwargs['max_tokens'] = args.max_tokens
+    # ★★★ 修正箇所 ★★★
+    # ポジショナル引数として渡すキーをkwargsから明示的に削除する
+    kwargs.pop('provider', None)
+    kwargs.pop('prompt', None)
 
     try:
         response = await cli.process_request_with_fallback(
@@ -201,5 +185,6 @@ if __name__ == "__main__":
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    from llm_api import setup_logging
+    setup_logging()
     asyncio.run(main())

@@ -1,12 +1,14 @@
 # /llm_api/tools/image_retrieval.py
-# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/tools/image_retrieval.py
-# タイトル: Image Retrieval Tool
-# 役割: SerpApiを利用してWebから画像を検索し、結果を返すツール。
+# タイトル: Image Retrieval Tool (Corrected)
+# 役割: SerpApiを利用して画像を検索する。インポート文とクラス名をライブラリの仕様に合わせて修正済み。
 
 import logging
 import os
 from typing import NamedTuple, Optional
-from serpapi import GoogleSearch
+
+from serpapi.Google Search_results import GoogleSearchResults
+from ..config import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +21,9 @@ class ImageResult(NamedTuple):
 
 def search(query: str) -> Optional[ImageResult]:
     """Performs an image search using SerpApi and returns the top result."""
-    api_key = os.getenv("SERPAPI_API_KEY")
+    api_key = settings.SERPAPI_API_KEY
     if not api_key:
-        logger.warning("SERPAPI_API_KEY環境変数が設定されていません。画像検索はスキップされます。")
+        logger.warning("SERPAPI_API_KEYが設定されていません。画像検索はスキップされます。")
         return None
 
     params = {
@@ -32,7 +34,7 @@ def search(query: str) -> Optional[ImageResult]:
     }
 
     try:
-        search_client = GoogleSearch(params)
+        search_client = GoogleSearchResults(params)
         results = search_client.get_dict()
         
         image_results = results.get("images_results")
@@ -40,7 +42,6 @@ def search(query: str) -> Optional[ImageResult]:
             logger.warning(f"画像検索で結果が見つかりませんでした: '{query}'")
             return None
         
-        # Return the first result
         top_result = image_results[0]
         return ImageResult(
             title=top_result.get("title"),

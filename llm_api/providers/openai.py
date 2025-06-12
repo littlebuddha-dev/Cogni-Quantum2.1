@@ -1,10 +1,10 @@
 # /llm_api/providers/openai.py
 import logging
-import os
 from typing import Any, Dict
 
 from openai import AsyncOpenAI
 from .base import LLMProvider, ProviderCapability
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +12,9 @@ class OpenAIProvider(LLMProvider):
     """
     OpenAI APIと対話するための標準プロバイダー
     """
-    def __init__(self, model: str = None):
-        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model = model or "gpt-4o"
+    def __init__(self):
+        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self.default_model = settings.OPENAI_DEFAULT_MODEL
         super().__init__()
 
     def get_capabilities(self) -> Dict[ProviderCapability, bool]:
@@ -39,9 +39,11 @@ class OpenAIProvider(LLMProvider):
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
+        model_to_use = kwargs.get("model", self.default_model)
+
         try:
             response = await self.client.chat.completions.create(
-                model=kwargs.get("model", self.model),
+                model=model_to_use,
                 messages=messages,
                 temperature=kwargs.get("temperature", 0.7),
                 max_tokens=kwargs.get("max_tokens", 1024),
