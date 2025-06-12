@@ -1,7 +1,6 @@
 # /llm_api/providers/enhanced_huggingface_v2.py
-# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/enhanced_huggingface_v2.py
-# タイトル: EnhancedHuggingFaceProviderV2 (Final Fix)
-# 役割: RAGの指示（--wikipedia）をCogniQuantumシステムへ正しく中継する。
+# タイトル: EnhancedHuggingFaceProviderV2 with Real-time Adjustment
+# 役割: リアルタイム複雑性調整の指示をCogniQuantumシステムへ中継する。
 
 import logging
 from typing import Any, Dict
@@ -33,6 +32,7 @@ class EnhancedHuggingFaceProviderV2(EnhancedLLMProvider):
             use_rag = kwargs.get('use_rag', False)
             knowledge_base_path = kwargs.get('knowledge_base_path')
             use_wikipedia = kwargs.get('use_wikipedia', False)
+            real_time_adjustment = kwargs.get('real_time_adjustment', True)
 
             result = await cq_system.solve_problem(
                 prompt,
@@ -40,7 +40,8 @@ class EnhancedHuggingFaceProviderV2(EnhancedLLMProvider):
                 force_regime=force_regime,
                 use_rag=use_rag,
                 knowledge_base_path=knowledge_base_path,
-                use_wikipedia=use_wikipedia
+                use_wikipedia=use_wikipedia,
+                real_time_adjustment=real_time_adjustment
             )
 
             if not result.get('success'):

@@ -1,8 +1,11 @@
 # /llm_api/cogniquantum/engine.py
-"""
-論文の発見に基づく改良推論エンジン
-"""
+# タイトル: Enhanced Reasoning Engine with Parallel Sub-problem Solving
+# 役割: 論文の発見に基づく改良推論エンジン。高複雑性モードにおいて、サブ問題を並列解決する機能を追加して高速化する。
+
 import logging
+import json
+import re
+import asyncio
 from typing import Any, Dict, List
 
 from .analyzer import AdaptiveComplexityAnalyzer
@@ -29,9 +32,11 @@ class EnhancedReasoningEngine:
         """複雑性体制に応じた適応的推論の実行"""
         
         if complexity_score is None or regime is None:
-            complexity_score, regime = self.complexity_analyzer.analyze_complexity(prompt)
+            # force_regimeが渡された場合でも、regimeがNoneなら分析を行う
+            if regime is None:
+                complexity_score, regime = self.complexity_analyzer.analyze_complexity(prompt)
         
-        logger.info(f"推論実行開始: 体制={regime.value}, 複雑性={complexity_score:.2f}")
+        logger.info(f"推論実行開始: 体制={regime.value}, 複雑性={complexity_score or 'N/A'}")
         
         if regime == ComplexityRegime.LOW:
             return await self._execute_low_complexity_reasoning(prompt, system_prompt)
@@ -59,7 +64,7 @@ class EnhancedReasoningEngine:
         
         return {
             'solution': response.get('text', ''),
-            'error': response.get('error'), # エラー情報を伝達
+            'error': response.get('error'),
             'complexity_regime': ComplexityRegime.LOW.value,
             'reasoning_approach': 'efficient_direct',
             'overthinking_prevention': True
@@ -90,7 +95,7 @@ class EnhancedReasoningEngine:
         
         return {
             'solution': response.get('text', ''),
-            'error': response.get('error'), # エラー情報を伝達
+            'error': response.get('error'),
             'complexity_regime': ComplexityRegime.MEDIUM.value,
             'reasoning_approach': 'structured_progressive',
             'stage_verification': True
@@ -101,23 +106,22 @@ class EnhancedReasoningEngine:
         prompt: str, 
         system_prompt: str
     ) -> Dict[str, Any]:
-        """高複雑性問題の推論（崩壊回避戦略）"""
-        logger.info("高複雑性推論モード: 分解・段階実行")
+        """高複雑性問題の推論（崩壊回避戦略）- サブ問題の並列解決を導入"""
+        logger.info("高複雑性推論モード: 分解・並列解決・統合")
         
-        decomposition_result = await self._decompose_complex_problem(prompt, system_prompt)
-        if decomposition_result.get('error'): # 分解でエラーが発生した場合
-            return {'solution': '', 'error': decomposition_result['error']}
+        sub_problems = await self._decompose_complex_problem(prompt, system_prompt)
+        if isinstance(sub_problems, dict) and sub_problems.get('error'):
+            return {'solution': '', 'error': sub_problems['error']}
+        
+        if not sub_problems:
+            logger.warning("問題の分解に失敗、またはサブ問題がありません。標準的なアプローチにフォールバックします。")
+            return await self._execute_medium_complexity_reasoning(prompt, system_prompt)
 
-        staged_solutions = await self._solve_decomposed_problems(
-            decomposition_result, prompt, system_prompt
-        )
-        if staged_solutions[-1].get('error'): # 段階的解決でエラーが発生した場合
-             return {'solution': '', 'error': staged_solutions[-1]['error']}
-
-        final_solution = await self._integrate_staged_solutions(
-            staged_solutions, prompt, system_prompt
-        )
-        # 最終的なソリューションにエラーが含まれているか確認
+        staged_solutions = await self._solve_decomposed_problems(sub_problems, prompt, system_prompt)
+        if any(s.get('error') for s in staged_solutions):
+             logger.warning("一部のサブ問題の解決中にエラーが発生しました。")
+        
+        final_solution = await self._integrate_staged_solutions(staged_solutions, prompt, system_prompt)
         if isinstance(final_solution, dict) and final_solution.get('error'):
             return {'solution': '', 'error': final_solution['error']}
         
@@ -125,8 +129,8 @@ class EnhancedReasoningEngine:
             'solution': final_solution,
             'error': None,
             'complexity_regime': ComplexityRegime.HIGH.value,
-            'reasoning_approach': 'decomposition_staged',
-            'decomposition_results': decomposition_result,
+            'reasoning_approach': 'decomposition_parallel_solve_integration',
+            'decomposition_results': sub_problems,
             'staged_solutions': staged_solutions,
             'collapse_prevention': True
         }
@@ -135,32 +139,99 @@ class EnhancedReasoningEngine:
         self, 
         prompt: str, 
         system_prompt: str
-    ) -> Dict[str, Any]:
-        """複雑問題の分解"""
-        # ... (prompt definitions) ...
+    ) -> List[str] | Dict:
+        """複雑な問題を解決可能なサブ問題のJSONリストに分解する"""
+        decomposition_prompt = f"""以下の複雑な問題を、解決可能な独立したサブ問題に分解してください。
+思考プロセスを段階的に示し、最終的にサブ問題のリストをJSON配列として出力してください。
+
+問題: {prompt}
+
+出力形式は必ず以下のJSONフォーマットに従ってください。
+{{
+  "sub_problems": [
+    "サブ問題1: ...",
+    "サブ問題2: ...",
+    "サブ問題3: ..."
+  ]
+}}
+"""
         response = await self.provider.call(decomposition_prompt, system_prompt, **self.base_model_kwargs)
-        return {'decomposition_text': response.get('text', ''), 'error': response.get('error')}
+        if response.get('error'):
+            return {'error': response['error']}
+        
+        try:
+            response_text = response.get('text', '{}').strip()
+            match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if not match:
+                logger.warning(f"分解応答からJSONを抽出できませんでした。箇条書きとしてパースを試みます。: {response_text}")
+                return [line.strip() for line in response_text.split('\n') if line.strip() and (line.strip().startswith('*') or line.strip().startswith('-') or re.match(r'^\d+\.', line.strip()))]
+
+            parsed_json = json.loads(match.group(0))
+            sub_problems = parsed_json.get("sub_problems", [])
+            if not isinstance(sub_problems, list):
+                logger.error("分解結果の'sub_problems'がリスト形式ではありません。")
+                return []
+            logger.info(f"{len(sub_problems)}個のサブ問題に分解しました。")
+            return sub_problems
+        except (json.JSONDecodeError, Exception) as e:
+            logger.error(f"問題の分解結果の解析中にエラー: {e}")
+            return []
     
     async def _solve_decomposed_problems(
         self, 
-        decomposition_result: Dict, 
+        sub_problems: List[str], 
         original_prompt: str, 
         system_prompt: str
     ) -> List[Dict]:
-        """分解された部分問題の段階的解決"""
-        # ... (prompt definitions) ...
-        response = await self.provider.call(staged_prompt, system_prompt, **self.base_model_kwargs)
-        return [{'staged_solution': response.get('text', ''), 'error': response.get('error')}]
+        """分解されたサブ問題を並列で解決する"""
+        logger.info(f"{len(sub_problems)}個のサブ問題を並列解決します。")
+
+        async def solve_task(sub_problem: str, index: int) -> Dict:
+            staged_prompt = f"""以下の背景情報と元の問題を踏まえ、指定された「サブ問題」を解決してください。
+これは大きな問題の一部です。このサブ問題に集中して、詳細かつ具体的な解決策を提示してください。
+
+# 背景
+元の問題: {original_prompt}
+
+# 解決すべきサブ問題
+{sub_problem}
+"""
+            logger.debug(f"サブ問題 {index+1} の解決を開始...")
+            response = await self.provider.call(staged_prompt, system_prompt, **self.base_model_kwargs)
+            logger.debug(f"サブ問題 {index+1} の解決が完了。")
+            return {'sub_problem': sub_problem, 'solution': response.get('text', ''), 'error': response.get('error')}
+
+        tasks = [solve_task(sp, i) for i, sp in enumerate(sub_problems)]
+        solved_parts = await asyncio.gather(*tasks)
+        return solved_parts
     
     async def _integrate_staged_solutions(
         self, 
         staged_solutions: List[Dict], 
         original_prompt: str, 
         system_prompt: str
-    ) -> str:
-        """段階的解決策の統合"""
-        # ... (prompt definitions) ...
+    ) -> str | Dict:
+        """段階的解決策を統合し、一貫性のある最終解を生成する"""
+        if not staged_solutions: return ""
+
+        context = "\n\n".join(
+            f"### サブ問題: {s['sub_problem']}\n解決策: {s['solution']}"
+            for s in staged_solutions if not s.get('error') and s.get('solution')
+        )
+        integration_prompt = f"""以下の「元の問題」と、それに関連する複数の「サブ問題の解決策」を統合し、一貫性のある包括的な最終解答を作成してください。
+
+# 元の問題
+{original_prompt}
+
+# サブ問題の解決策
+---
+{context}
+---
+
+# 最終解答
+上記の情報を synthesis (統合・総合) し、論理的な流れを持つ、最終的な答えを生成してください。
+"""
         response = await self.provider.call(integration_prompt, system_prompt, **self.base_model_kwargs)
         if response.get('error'):
-            return {'solution': '', 'error': response.get('error')}
+            return {'error': response['error']}
         return response.get('text', '')

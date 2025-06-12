@@ -25,7 +25,6 @@ async def check_ollama_status():
     try:
         import httpx
         async with httpx.AsyncClient(timeout=5.0) as client:
-            # サーバー接続確認
             try:
                 response = await client.get("http://localhost:11434/api/tags")
                 if response.status_code == 200:
@@ -66,6 +65,7 @@ async def test_basic_functionality():
 async def test_provider_creation():
     """プロバイダー作成テスト"""
     print("\n🏭 プロバイダー作成テスト中...")
+    success = True
     
     try:
         from llm_api.providers import get_provider
@@ -76,33 +76,37 @@ async def test_provider_creation():
             print("✅ 標準Ollamaプロバイダー: 作成成功")
         except Exception as e:
             print(f"❌ 標準Ollamaプロバイダー: {e}")
+            success = False
         
         # 拡張プロバイダーテスト（V2優先）
         try:
-            provider = get_provider('ollama', enhanced=True, prefer_v2=True)
+            # 'prefer_v2'引数を削除して修正
+            provider = get_provider('ollama', enhanced=True)
             print("✅ 拡張Ollamaプロバイダー: 作成成功")
         except Exception as e:
             print(f"❌ 拡張Ollamaプロバイダー: {e}")
+            success = False
         
-        return True
+        return success
     except Exception as e:
-        print(f"❌ プロバイダー作成テスト失敗: {e}")
+        print(f"❌ プロバイダー作成テストのインポート中に失敗: {e}")
         return False
 
 async def test_simple_call():
     """シンプルな呼び出しテスト"""
     print("\n📞 シンプル呼び出しテスト中...")
     
+    # このテストはOllamaが利用可能な場合にのみ実行
     ollama_ok, models = await check_ollama_status()
     if not ollama_ok or not models:
         print("⚠️  Ollama利用不可のため、呼び出しテストをスキップ")
-        return False
+        # スキップは失敗ではないのでTrueを返す
+        return True
     
     try:
         from llm_api.providers import get_provider
         
-        # 利用可能なモデルを使用
-        selected_model = models[0].split(':')[0]  # タグを除去
+        selected_model = models[0].split(':')[0]
         print(f"🎯 使用モデル: {selected_model}")
         
         provider = get_provider('ollama', enhanced=False)
@@ -115,7 +119,7 @@ async def test_simple_call():
             print(f"✅ 呼び出し成功: {response['text'][:50]}...")
             return True
         else:
-            print(f"❌ 呼び出し失敗: 空の応答")
+            print(f"❌ 呼び出し失敗: {response.get('error', '空の応答')}")
             return False
             
     except Exception as e:
@@ -189,7 +193,6 @@ async def main():
     print("🚀 CogniQuantum V2 クイックテスト開始")
     print("=" * 50)
     
-    # テスト実行
     tests = [
         ("Ollama状態チェック", check_ollama_status),
         ("基本機能テスト", test_basic_functionality),
@@ -200,9 +203,10 @@ async def main():
     results = []
     for test_name, test_func in tests:
         try:
+            # check_ollama_statusはタプルを返すので特別扱い
             if test_name == "Ollama状態チェック":
-                result = await test_func()
-                results.append((test_name, result[0]))
+                result, _ = await test_func()
+                results.append((test_name, result))
             else:
                 result = await test_func()
                 results.append((test_name, result))
@@ -210,26 +214,24 @@ async def main():
             logger.error(f"{test_name}でエラー: {e}")
             results.append((test_name, False))
     
-    # 結果サマリー
     print("\n" + "=" * 50)
     print("📊 テスト結果サマリー:")
     
-    passed = 0
+    passed = sum(1 for _, success in results if success)
+    total = len(results)
+
     for test_name, success in results:
         status = "✅ PASS" if success else "❌ FAIL"
         print(f"  {status} {test_name}")
-        if success:
-            passed += 1
     
-    total = len(results)
     print(f"\n📈 総合結果: {passed}/{total} テスト合格")
     
     if passed == total:
         print("🎉 全テスト合格！システムは正常に動作します。")
         print("\n次のコマンドで実際のテストを行ってください:")
-        print("python fetch_llm_v2_fixed.py ollama 'Hello' --mode simple")
-    elif passed == 0:
-        print("😞 全テスト失敗。セットアップガイドを確認してください。")
+        print("python fetch_llm_v2.py ollama 'Hello' --mode simple")
+    elif not results[0][1]: # Ollamaチェックが失敗した場合
+        print("😞 Ollamaの接続に失敗しました。セットアップガイドを確認してください。")
         print("python quick_test_v2.py --setup-guide")
     else:
         print("⚠️  一部のテストが失敗しました。")

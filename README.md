@@ -121,18 +121,20 @@ python fetch_llm_v2.py openai "Analyze the intersection of AI, quantum computing
 |------|------------------|-----------------|----------|
 | `efficient` | Low | Overthinking Prevention | Quick questions, basic tasks |
 | `balanced` | Medium | Optimal Reasoning Quality | Analysis, explanations |
-| `decomposed` | High | Collapse Prevention | Complex problem-solving |
+| `decomposed` | High | Collapse Prevention & Speed | Complex problem-solving |
 | `adaptive` | Auto-detected | Dynamic Optimization | Unknown complexity |
+| `parallel` | All | **Best-of-Breed Quality** | **Maximum quality, mission-critical tasks** |
 | `paper_optimized` | All | Complete Research Integration | Maximum quality needed |
 
 ### **Advanced Features**
 
-- **Automatic Complexity Analysis**: Real-time problem complexity assessment
-- **Dynamic Strategy Selection**: Optimal reasoning approach per problem type  
-- **Overthinking Detection**: Prevents unnecessary token usage
-- **Collapse Prevention**: Maintains reasoning quality at high complexity
-- **Multi-Provider Support**: OpenAI, Claude, Gemini, Ollama, HuggingFace
-- **Performance Monitoring**: Detailed metrics and analysis
+- **Automatic Complexity Analysis**: Real-time problem complexity assessment.
+- **Real-time Complexity Adjustment**: Automatically re-evaluates and escalates the reasoning strategy if the initial response is insufficient.
+- **Dynamic Strategy Selection**: Optimal reasoning approach per problem type.
+- **Overthinking Detection**: Prevents unnecessary token usage.
+- **Collapse Prevention**: Maintains reasoning quality at high complexity.
+- **Multi-Provider Support**: OpenAI, Claude, Gemini, Ollama, HuggingFace.
+- **Performance Monitoring**: Detailed metrics and analysis.
 
 ---
 
@@ -497,11 +499,12 @@ This is an independent research implementation based on the publicly available A
 
 ## 🚀 **Future Roadmap**
 
-### **V2.1 (Next Release)**
-- [ ] Real-time complexity adjustment
-- [ ] Parallel reasoning pipelines  
-- [ ] Dynamic token allocation optimization
-- [ ] Custom regime definition API
+### **V2.1 (Implemented)**
+- [x] **Real-time complexity adjustment**: The system now re-evaluates the solution and can escalate the complexity regime for a more detailed answer if the initial one is insufficient.
+
+### **V2.2 (Implemented)**
+- [x] **Parallel reasoning pipelines**: A new `parallel` mode runs multiple strategies concurrently and selects the best outcome, maximizing quality.
+- [x] **Real-time complexity adjustment**: The system now re-evaluates the solution and can escalate the complexity regime for a more detailed answer if the initial one is insufficient.
 
 ### **V3.0 (Future Vision)**
 - [ ] Quantum-inspired reasoning implementation

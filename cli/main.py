@@ -1,7 +1,6 @@
 # /cli/main.py
-# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/cli/main.py
-# タイトル: CLI main entrypoint with Wikipedia RAG option
-# 役割: CLIのエントリーポイントと引数解析。Wikipediaを知識源とするRAGオプションを追加する。
+# タイトル: CLI main entrypoint with Parallel Mode
+# 役割: CLIのエントリーポイントと引数解析。新しい'parallel'モードを追加する。
 
 import argparse
 import asyncio
@@ -36,7 +35,7 @@ async def main():
     # V2専用モードを含む選択肢
     mode_choices = [
         'simple', 'chat', 'reasoning', 'creative-fusion', 'self-correct',
-        'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized'
+        'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel'
     ]
     parser.add_argument("--mode", default="simple", choices=mode_choices, help="実行モード")
     
@@ -55,8 +54,10 @@ async def main():
     parser.add_argument("--troubleshooting", action="store_true", help="トラブルシューティングガイド")
     
     # V2専用オプション
-    parser.add_argument("--force-v2", action="store_true", help="V2機能強制使用")
-    parser.add_argument("--no-fallback", action="store_true", help="フォールバック無効")
+    v2_group = parser.add_argument_group('V2 Options')
+    v2_group.add_argument("--force-v2", action="store_true", help="V2機能強制使用")
+    v2_group.add_argument("--no-fallback", action="store_true", help="フォールバック無効")
+    v2_group.add_argument("--no-real-time-adjustment", dest="real_time_adjustment", action="store_false", help="リアルタイム複雑性調整を無効化")
 
     # RAGオプション
     rag_group = parser.add_argument_group('RAG Options')
@@ -64,10 +65,8 @@ async def main():
     rag_group.add_argument("--knowledge-base", dest="knowledge_base_path", help="RAGが使用するナレッジベースのファイルパスまたはURL")
     rag_group.add_argument("--wikipedia", dest="use_wikipedia", action="store_true", help="RAG機能でWikipediaを知識源として使用")
 
-
     args = parser.parse_args()
 
-    # RAG関連の引数チェック
     if args.use_rag and args.use_wikipedia and args.knowledge_base_path:
         parser.error("--knowledge-base と --wikipedia は同時に使用できません。")
     if args.use_rag and not (args.use_wikipedia or args.knowledge_base_path):
@@ -75,10 +74,8 @@ async def main():
     if (args.use_wikipedia or args.knowledge_base_path) and not args.use_rag:
          parser.error("--knowledge-base または --wikipedia を使用するには --rag の指定も必要です。")
 
-
     cli = CogniQuantumCLIV2Fixed()
 
-    # 各種情報表示オプションは稼働チェックの前に処理
     if args.list_providers:
         print("標準プロバイダー:", ", ".join(list_providers()))
         enhanced_info = list_enhanced_providers()
@@ -93,25 +90,17 @@ async def main():
         cli.print_troubleshooting_guide()
         return
 
-    # プロバイダーの指定がない場合はヘルプを表示して終了
     if not args.provider:
         parser.print_help()
         return
         
-    # --- 起動前チェック ---
     is_available = True
-    # ログ出力を抑制するため、ここではロギングしない
     if args.provider == 'ollama':
         ollama_health = await cli._check_ollama_models()
         if not ollama_health.get('server_available') or not ollama_health.get('models_loaded'):
             is_available = False
     else:
-        key_map = {
-            'openai': 'OPENAI_API_KEY',
-            'claude': 'CLAUDE_API_KEY',
-            'gemini': 'GEMINI_API_KEY',
-            'huggingface': 'HF_TOKEN'
-        }
+        key_map = {'openai': 'OPENAI_API_KEY', 'claude': 'CLAUDE_API_KEY', 'gemini': 'GEMINI_API_KEY', 'huggingface': 'HF_TOKEN'}
         env_var = key_map.get(args.provider)
         if env_var and not os.getenv(env_var):
             is_available = False
@@ -119,25 +108,20 @@ async def main():
     if not is_available:
         print("就寝中です・・・")
         return
-    # --- 起動前チェック完了 ---
 
-    # 健全性チェック
     if args.health_check:
         try:
             health_report = await cli.check_system_health(args.provider)
-            print(format_json_output(health_report) if args.json else 
-                  json.dumps(health_report, indent=2, ensure_ascii=False))
+            print(format_json_output(health_report) if args.json else json.dumps(health_report, indent=2, ensure_ascii=False))
             return
         except Exception as e:
             print(f"健全性チェック中にエラー: {e}")
             return
 
-    # プロンプト取得
     prompt = await read_from_pipe_or_file(args.prompt, args.file)
     if not prompt:
         parser.error("プロンプトが指定されていません。")
 
-    # kwargs構築
     kwargs = {
         'mode': args.mode,
         'system_prompt': args.system_prompt or "",
@@ -145,38 +129,28 @@ async def main():
         'no_fallback': args.no_fallback,
         'use_rag': args.use_rag, 
         'knowledge_base_path': args.knowledge_base_path,
-        'use_wikipedia': args.use_wikipedia
+        'use_wikipedia': args.use_wikipedia,
+        'real_time_adjustment': args.real_time_adjustment,
     }
     
-    if args.model:
-        kwargs['model'] = args.model
-    if args.temperature is not None:
-        kwargs['temperature'] = args.temperature
-    if args.max_tokens is not None:
-        kwargs['max_tokens'] = args.max_tokens
+    if args.model: kwargs['model'] = args.model
+    if args.temperature is not None: kwargs['temperature'] = args.temperature
+    if args.max_tokens is not None: kwargs['max_tokens'] = args.max_tokens
 
-    # リクエスト処理
     try:
-        # process_request_with_fallbackにkwargsを渡す必要があります
-        # cli.handler.pyの修正も必要です
         response = await cli.process_request_with_fallback(
-            args.provider,
-            prompt,
-            **kwargs
+            args.provider, prompt, **kwargs
         )
-
-        # 結果出力
+        
         if args.json:
             print(format_json_output(response))
         else:
-            text_output = response.get("text", "") # エラー時は空文字
-            print(text_output, end='') # 不要な改行を防ぐ
+            text_output = response.get("text", "")
+            print(text_output, end='')
             
-            # 画像URLがあれば表示
             if response.get('image_url'):
                 print(f"\n\n関連画像: {response['image_url']}")
 
-            # エラーまたは付加情報がある場合は改行してから表示
             if response.get('error') or response.get('fallback_used') or response.get('version') == 'v2':
                 print() 
 
@@ -199,7 +173,6 @@ async def main():
                     for error in response['original_errors']:
                         print(f"  • {error}")
             
-            # V2情報の表示
             elif response.get('version') == 'v2':
                 v2_info = response.get('paper_based_improvements', {})
                 print(f"\n📊 V2処理情報:")
@@ -209,10 +182,11 @@ async def main():
                     print("  ✓ Overthinking防止有効")
                 if v2_info.get('collapse_prevention'):
                     print("  ✓ 崩壊防止機構有効")
+                if v2_info.get('real_time_adjustment_active'):
+                    print("  ✓ リアルタイム複雑性調整有効")
                 if v2_info.get('rag_enabled'):
                     rag_source = "Wikipedia" if v2_info.get('rag_source') == 'wikipedia' else 'Knowledge Base'
                     print(f"  ✓ RAGによる知識拡張有効 (ソース: {rag_source})")
-
 
     except KeyboardInterrupt:
         print("\n中断されました。")
@@ -221,11 +195,8 @@ async def main():
         print(f"\n予期しない致命的なエラーが発生しました: {e}")
 
 if __name__ == "__main__":
-    # Windowsでasyncioのイベントループポリシーを設定
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
-    # ログ設定
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
     asyncio.run(main())

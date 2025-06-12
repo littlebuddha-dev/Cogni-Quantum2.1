@@ -1,7 +1,6 @@
 # /llm_api/providers/enhanced_openai_v2.py
-# パス: littlebuddha-dev/cogni-quantum2.1/Cogni-Quantum2.1-fb17e3467b051803511a1506de5e02910bbae07e/llm_api/providers/enhanced_openai_v2.py
-# タイトル: EnhancedOpenAIProviderV2 (Final Fix)
-# 役割: RAGの指示（--wikipedia）をCogniQuantumシステムへ正しく中継する。
+# タイトル: EnhancedOpenAIProviderV2 supporting Parallel Mode
+# 役割: 'parallel'モードの指示をCogniQuantumシステムへ中継する。
 
 import logging
 from typing import Any, Dict
@@ -17,7 +16,7 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
 
     def should_use_enhancement(self, prompt: str, **kwargs) -> bool:
         return kwargs.get('force_v2', False) or kwargs.get('mode', 'simple') in [
-            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized'
+            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel'
         ]
     
     async def enhanced_call(self, prompt: str, system_prompt: str = "", **kwargs) -> Dict[str, Any]:
@@ -33,6 +32,7 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
             use_rag = kwargs.get('use_rag', False)
             knowledge_base_path = kwargs.get('knowledge_base_path')
             use_wikipedia = kwargs.get('use_wikipedia', False)
+            real_time_adjustment = kwargs.get('real_time_adjustment', True)
             
             result = await cq_system.solve_problem(
                 prompt,
@@ -40,7 +40,9 @@ class EnhancedOpenAIProviderV2(EnhancedLLMProvider):
                 force_regime=force_regime,
                 use_rag=use_rag,
                 knowledge_base_path=knowledge_base_path,
-                use_wikipedia=use_wikipedia
+                use_wikipedia=use_wikipedia,
+                real_time_adjustment=real_time_adjustment,
+                mode=mode  # Pass the mode to the system
             )
             
             if not result.get('success'):

@@ -18,18 +18,12 @@ from llm_api.utils.helper_functions import format_json_output, read_from_pipe_or
 logger = logging.getLogger(__name__)
 
 class CogniQuantumCLIV2Fixed:
-    """CogniQuantum V2統合CLI（修正版）"""
-    
     def __init__(self):
         self.session_history = deque(maxlen=100)
         
         # V2専用モード定義
         self.v2_modes = {
-            'efficient',      # 低複雑性最適化
-            'balanced',       # 中複雑性バランス
-            'decomposed',     # 高複雑性分解戦略
-            'adaptive',       # 自動複雑性判定
-            'paper_optimized' # 論文知見全適用
+            'efficient', 'balanced', 'decomposed', 'adaptive', 'paper_optimized', 'parallel'
         }
 
     async def check_system_health(self, provider_name: str) -> Dict[str, Any]:

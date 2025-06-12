@@ -172,6 +172,7 @@ python fetch_llm_v2.py openai "Analyze the intersection of AI and quantum comput
 | `balanced` | Medium | Optimal Reasoning Quality | Analysis, explanations |
 | `decomposed` | High | Collapse Prevention | Complex problem-solving |
 | `adaptive` | Auto-detected | Dynamic Optimization | Unknown complexity |
+| `parallel` | All | **Best-of-Breed Selection** | **Mission-critical tasks requiring highest quality** |
 | `paper_optimized` | All Regimes | Complete Research Integration | Maximum quality |
 
 ### Legacy Mode Compatibility
@@ -315,6 +316,7 @@ python fetch_llm_v2.py ollama \
 | `--paper-mode` | Apply all research insights | `--paper-mode` |
 | `--complexity-analysis` | Show detailed complexity metrics | `--complexity-analysis` |
 | `--no-fallback` | Disable fallback mechanisms | `--no-fallback` |
+| `--no-real-time-adjustment` | Disable dynamic re-evaluation of complexity | `--no-real-time-adjustment` |
 | `--v2-help` | Show V2-specific help | `--v2-help` |
 
 ### Diagnostic Options
