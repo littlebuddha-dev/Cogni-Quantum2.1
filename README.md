@@ -2,7 +2,7 @@
 
 ## Breaking Through "The Illusion of Thinking" - A Research-Based Implementation
 
-**CogniQuantum** は、Apple Researchの画期的な論文["The Illusion of Thinking"](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf)で特定された根本的な限界を克服するソリューションを実装した革新的なLLMインターフェースです。このアップデート版では、Retrieval-Augmented Generation (RAG)、量子インスピレーション推論、自己改善複雑性分析などの強力な新機能を導入しています。
+**CogniQuantum** is a revolutionary LLM interface that implements solutions to overcome the fundamental limitations identified in Apple Research's groundbreaking paper ["The Illusion of Thinking"](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf). This updated version introduces powerful new features including Retrieval-Augmented Generation (RAG), quantum-inspired reasoning, and self-improving complexity analysis.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -11,116 +11,116 @@
 
 ---
 
-## 🚀 **主要機能とモード**
+## 🚀 **Core Features & Modes**
 
-### **研究ベースの推論モード**
+### **Research-Based Reasoning Modes**
 
-あらゆる複雑性に対応する推論モードスイートを提供し、新しい戦略で強化されています。
+Our system offers a comprehensive suite of reasoning modes designed to tackle problems of any complexity level, now enhanced with advanced strategies.
 
-| モード | 対象複雑性 | 主要メリット | 使用例 |
+| Mode | Target Complexity | Primary Benefit | Use Case |
 |---|---|---|---|
-| `efficient` | 低 | **過度思考防止** | 簡単な質問、基本タスク |
-| `balanced` | 中 | 最適推論品質 | 標準分析、説明 |
-| `decomposed` | 高 | **破綻防止と速度** | 複雑問題解決、システム設計 |
-| `adaptive` | 自動検出 | **動的最適化** | 複雑性不明または混合質問 |
-| `parallel` | 全て | **最高品質** | ミッションクリティカル、最高品質要求 |
-| `quantum_inspired` | 全て | 包括的統合洞察 | ブレインストーミング、哲学的質問、戦略 |
-| `edge` | 低 | 軽量・高速 | 低リソースデバイス、クイックチェック |
-| `paper_optimized` | 全て | 完全研究統合 | 最大研究効果、ベンチマーク |
+| `efficient` | Low | **Overthinking Prevention** | Quick questions, basic tasks |
+| `balanced` | Medium | Optimal Reasoning Quality | Standard analysis, explanations |
+| `decomposed` | High | **Collapse Prevention & Speed** | Complex problem-solving, system design |
+| `adaptive` | Auto-detected | **Dynamic Optimization** | Questions of unknown or mixed complexity |
+| `parallel` | All | **Best-of-Breed Quality** | Mission-critical tasks, maximum quality |
+| `quantum_inspired` | All | Holistic, Synthesized Insight | Brainstorming, philosophical questions, strategy |
+| `edge` | Low | Lightweight & Fast | Low-resource devices, quick checks |
+| `paper_optimized` | All | Complete Research Integration | Maximum research benefit, benchmarking |
 
-### **高度機能**
+### **Advanced Features**
 
-- **自動複雑性分析**: リアルタイム多言語問題複雑性評価
-- **自己改善分析**: 過去のやり取りから学習し、将来をより賢く決定
-- **動的戦略選択**: 問題ごとに最適な推論アプローチを選択
-- **検索拡張生成 (RAG)**: **Wikipedia**またはローカルファイル/URLからの外部知識でプロンプトを拡張
-- **過度思考・破綻防止**: 効率性と推論品質を維持するコアメカニズム
-- **マルチプロバイダーサポート**: OpenAI, Claude, Gemini, Ollama, HuggingFace
-- **構造化思考プロセス**: 完全な透明性のための詳細推論ステップ出力
+- **Automatic Complexity Analysis**: Real-time, multi-language problem complexity assessment
+- **Self-Improving Analysis**: Learns from past interactions to make smarter future decisions
+- **Dynamic Strategy Selection**: Optimal reasoning approach chosen per problem
+- **Retrieval-Augmented Generation (RAG)**: Augments prompts with external knowledge from **Wikipedia** or local files/URLs
+- **Overthinking & Collapse Prevention**: Core mechanisms to maintain efficiency and reasoning quality
+- **Multi-Provider Support**: OpenAI, Claude, Gemini, Ollama, HuggingFace
+- **Structured Thought Process**: Outputs detailed reasoning steps for full transparency
 
 ---
 
-## 🛠️ インストールとクイックスタート
+## 🛠️ Installation & Quick Start
 
-### **必要環境**
+### **Requirements**
 - Python 3.10+
-- 全依存関係インストール: `pip install -r requirements.txt`
-- 最低1つのLLMプロバイダーAPIキーまたはローカルOllamaセットアップ
+- Install all dependencies: `pip install -r requirements.txt`
+- At least one LLM provider API key or a local Ollama setup
 
-### **セットアップ**
+### **Setup**
 ```bash
-# リポジトリをクローン
+# Clone the repository
 git clone https://github.com/littlebuddha-dev/Cogni-Quantum.git
 cd Cogni-Quantum
 
-# 必要な依存関係をすべてインストール
+# Install all required dependencies
 pip install -r requirements.txt
 
-# 環境ファイルを作成・設定
+# Create and configure your environment file
 cp .env.example .env
-# APIキー（OPENAI_API_KEY等）で.envを編集
+# Edit .env with your API keys (OPENAI_API_KEY, etc.)
 
-# セットアップをテスト
+# Test your setup
 python quick_test_v2.py
 ```
 
-### **即座の使用**
+### **Immediate Usage**
 
 ```bash
-# 基本効率テスト
-python fetch_llm_v2.py ollama "日本の首都は何ですか？" --mode efficient
+# Basic efficiency test
+python fetch_llm_v2.py ollama "What is the capital of Japan?" --mode efficient
 
-# 破綻防止による複雑推論
-python fetch_llm_v2.py claude "持続可能な都市交通システムを設計してください。" --mode decomposed
+# Complex reasoning with collapse prevention
+python fetch_llm_v2.py claude "Design a sustainable urban transportation system." --mode decomposed
 
-# 複雑性不明の適応モード
-python fetch_llm_v2.py openai "雇用市場におけるAIの経済的影響を分析してください。" --mode adaptive
+# Adaptive mode for unknown complexity
+python fetch_llm_v2.py openai "Analyze the economic impact of AI on the job market." --mode adaptive
 
-# 深い洞察のための量子インスピレーション統合
-python fetch_llm_v2.py openai "意識の本質とは何か？" --mode quantum_inspired
+# Quantum-inspired synthesis for deep insights
+python fetch_llm_v2.py openai "What is the nature of consciousness?" --mode quantum_inspired
 
-# Wikipedia使用のRAG駆動クエリ
-python fetch_llm_v2.py openai "LIGO実験の主要発見は何でしたか？" --mode balanced --wikipedia
+# RAG-powered query using Wikipedia
+python fetch_llm_v2.py openai "What were the key findings of the LIGO experiment?" --mode balanced --wikipedia
 ```
 
 ---
 
-## 🎮 使用例
+## 🎮 Usage Examples
 
-### **RAGを使った学術研究**
+### **Academic Research with RAG**
 
 ```bash
-# Wikipediaからの最新情報でクエリを拡張
+# Augment a query with the latest information from Wikipedia
 python fetch_llm_v2.py claude \
-"最近の発見に基づいて、量子コンピューティングの主要課題は何ですか？" \
+"Based on recent findings, what are the main challenges in quantum computing?" \
 --mode balanced --wikipedia
 ```
 
-### **ビジネス戦略統合**
+### **Business Strategy Synthesis**
 
 ```bash
-# 量子インスピレーションモードで多面的戦略を生成
+# Use quantum-inspired mode to generate a multi-faceted strategy
 python fetch_llm_v2.py openai \
-"楽観的、悲観的、倫理的観点を考慮して、ヨーロッパでのAIスタートアップの包括的市場参入戦略を開発してください。" \
+"Develop a holistic market entry strategy for an AI startup in Europe, considering optimistic, pessimistic, and ethical viewpoints." \
 --mode quantum_inspired
 ```
 
-### **技術問題解決**
+### **Technical Problem Solving**
 
 ```bash
-# 分解戦略を使った複雑システム設計
+# Design a complex system using the decomposition strategy
 python fetch_llm_v2.py ollama \
-"ソーシャルメディアアプリの高可用性・スケーラブルマイクロサービスアーキテクチャを設計してください。" \
+"Design a high-availability, scalable microservices architecture for a social media app." \
 --mode decomposed --model deepseek-r1
 ```
 
 ---
 
-## 🔬 アーキテクチャと実装
+## 🔬 Architecture & Implementation
 
-V2アーキテクチャは、RAG、自己学習、高度推論パイプラインの新コンポーネントを統合します。
+The V2 architecture integrates new components for RAG, self-learning, and advanced reasoning pipelines.
 
-### **コアコンポーネント**
+### **Core Components**
 
 ```mermaid
 graph TD
@@ -145,75 +145,75 @@ graph TD
     H -- retrieves from --> K[Wikipedia/Files]
 ```
 
-### **研究実装パイプライン**
+### **Research Implementation Pipeline**
 
-1. **入力**: ユーザープロンプトを受信
-2. **RAG（オプション）**: RAGManagerが検索クエリを抽出し、Wikipediaまたはローカルファイルからコンテキストを取得してプロンプトを拡張
-3. **複雑性分析**: AdaptiveComplexityAnalyzerが複雑性を評価、ComplexityLearnerからの提案を利用可能
-4. **パイプライン選択**: 選択モードに基づいて推論パイプライン（EnhancedReasoningEngine、QuantumReasoningEngine、Parallel）を選択
-5. **実行**: 選択エンジンがプロンプトを処理し、レジーム固有戦略（分解、過度思考防止等）を適用
-6. **自己修正（適応モード）**: システムが不十分解を再評価し、別試行のため複雑性レジームをエスカレート可能
-7. **学習**: 複雑性が調整された場合、ComplexityLearnerが成功結果を記録して将来分析を改善
-8. **出力**: 詳細思考プロセスを含む最終構造化ソリューションを返す
+1. **Input**: User prompt is received
+2. **RAG (Optional)**: RAGManager extracts a search query, retrieves context from Wikipedia or local files, and augments the prompt
+3. **Complexity Analysis**: AdaptiveComplexityAnalyzer assesses the complexity, potentially using suggestions from the ComplexityLearner
+4. **Pipeline Selection**: The system chooses a reasoning pipeline (EnhancedReasoningEngine, QuantumReasoningEngine, Parallel) based on the selected mode
+5. **Execution**: The chosen engine processes the prompt, applying regime-specific strategies (e.g., decomposition, overthinking prevention)
+6. **Self-Correction (Adaptive Mode)**: The system can re-evaluate an insufficient solution and escalate the complexity regime for another attempt
+7. **Learning**: If the complexity was adjusted, ComplexityLearner records the successful outcome to improve future analyses
+8. **Output**: A final, structured solution with a detailed thought process is returned
 
 ---
 
-## 🧪 テストと検証
+## 🧪 Testing & Validation
 
-システム安定性とパフォーマンスを確保する包括的テストスイートを含みます。
+A comprehensive test suite is included to ensure system stability and performance.
 
 ```bash
-# クイックシステムヘルスチェック
+# Quick system health check
 python quick_test_v2.py
 
-# 全利用可能V2プロバイダーとモードの包括テスト実行
+# Run a comprehensive test across all available V2 providers and modes
 python test_all_v2_providers.py
 ```
 
 ---
 
-## 🤝 サポートプロバイダー
+## 🤝 Supported Providers
 
-| プロバイダー | 標準 | 強化V2 | 特別機能 |
+| Provider | Standard | Enhanced V2 | Special Features |
 |---|---|---|---|
-| OpenAI | ✅ | ✅ | GPT-4o最適化、ビジョンサポート |
-| Claude | ✅ | ✅ | 推論特化、大コンテキスト |
-| Gemini | ✅ | ✅ | マルチモーダル、速度最適化 |
-| Ollama | ✅ | ✅ | ローカルモデル、プライバシー、コスト無料、並行安全 |
-| HuggingFace | ✅ | ✅ | オープンソース多様性、実験 |
+| OpenAI | ✅ | ✅ | GPT-4o optimization, vision support |
+| Claude | ✅ | ✅ | Reasoning specialization, large context |
+| Gemini | ✅ | ✅ | Multimodal, speed optimization |
+| Ollama | ✅ | ✅ | Local models, privacy, cost-free, concurrency-safe |
+| HuggingFace | ✅ | ✅ | Open-source diversity, experimentation |
 
 ---
 
-## 📚 開発者API
+## 📚 Developer API
 
-コアロジックを他のPythonアプリケーションに直接統合できます。
+The core logic can be integrated directly into other Python applications.
 
-### **直接システム使用**
+### **Direct System Usage**
 
 ```python
 # /main_api_example.py
-# タイトル: API使用例
-# 役割: CogniQuantumSystemV2をPythonアプリケーションで直接使用する方法を示す
+# Title: API Usage Example
+# Role: Demonstrates how to use CogniQuantumSystemV2 directly in Python applications
 
 import asyncio
 from llm_api.providers import get_provider
 from llm_api.cogniquantum import CogniQuantumSystemV2, ComplexityRegime
 
 async def run():
-    # 強化プロバイダーを取得
+    # Get an enhanced provider
     provider = get_provider('openai', enhanced=True)
     
-    # プロバイダーのenhanced_callは内部でCogniQuantumSystemV2を使用
+    # The provider's enhanced_call uses the CogniQuantumSystemV2 internally
     result = await provider.call(
-        "金融モデリング用の量子古典ハイブリッドアルゴリズムを設計してください。",
-        mode='decomposed'  # V2モードを使用
+        "Design a quantum-classical hybrid algorithm for financial modeling.",
+        mode='decomposed'  # Use a V2 mode
     )
 
     if not result.get('error'):
-        print("最終解決案:\n", result['text'])
-        # 構造化思考プロセスにアクセス
+        print("Final Solution:\n", result['text'])
+        # Access the structured thought process
         thought_process = result.get('paper_based_improvements', {}).get('thought_process', {})
-        print("\n思考プロセス:\n", thought_process)
+        print("\nThought Process:\n", thought_process)
 
 if __name__ == "__main__":
     asyncio.run(run())
@@ -221,8 +221,8 @@ if __name__ == "__main__":
 
 ---
 
-## 📜 ライセンス
+## 📜 License
 
-MIT License - 詳細はLICENSEファイルを参照してください。
+MIT License - see the LICENSE file for details.
 
-これは公開されているApple Research論文に基づく独立研究実装であり、Apple公式製品ではありません。
+This is an independent research implementation based on the publicly available Apple Research paper and is not an official Apple product.
